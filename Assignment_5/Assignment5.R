@@ -9,12 +9,11 @@ library("stringr")
 library("rgdal")
 library("mapproj")
 library("scales")
-library(gpclib)
-library(sp)
-library(rgeos)
-library(rgdal)
-library(maptools)
-library(maps)
+library("gpclib")
+library("sp")
+library("rgeos")
+library("rgdal")
+library("maptools")
 
 theme_simple_no_border <- theme(plot.title = element_text(family="Palatino", face="bold", size=18, hjust=0, margin = margin(0, 22, 0, 0)),
                                 plot.subtitle=element_text(size=13, family="Georgia", hjust=0, face="italic", color="#8E8883", margin = margin(10, 22, 22, 0)),
@@ -32,8 +31,7 @@ theme_map <- theme(axis.ticks = element_blank(),
                    panel.border = element_blank(), 
                    plot.title = element_text(family="Palatino", face="bold", size=18, hjust=0, margin = margin(0, 22, 0, 0)), 
                    plot.subtitle=element_text(size=13, family="Georgia", hjust=0, face="italic", color="#8E8883", margin = margin(10, 22, 22, 0)), 
-                   plot.caption=element_text(family = "Georgia", hjust = 0, size=9, face="italic", color="black"),
-                   rect = element_blank()
+                   plot.caption=element_text(family = "Georgia", hjust = 0, size=9, face="italic", color="black")
 )
 
 # MAP 1:
@@ -42,16 +40,7 @@ theme_map <- theme(axis.ticks = element_blank(),
 
 chicago_beat_map <- readOGR(dsn="ChicagoPoliceBeats", layer="ChicagoPoliceBeats")
 
-class(chicago_beat_map)
-chicago_beat_map@data
-
 chicago_beat.points <- fortify(chicago_beat_map, region="beat_num")
-
-ggplot(data=chicago_beat.points, aes(long, lat, group = group, fill = id)) +
-  geom_polygon() +
-  geom_path(color="white") +
-  theme(legend.position="none") +
-  coord_equal()
 
 # read in the dataset on complaints against police officers (by beats) obtained from Invisible Institute website: https://github.com/invinst/chicago-police-data
 chicago_police_complaints <- read.csv("complaints.csv")
@@ -59,8 +48,6 @@ chicago_police_complaints <- read.csv("complaints.csv")
 # filter only the data for year 2016
 chicago_police_complaints$Year <- format(as.Date(chicago_police_complaints$incident_datetime),"%Y")
 chicago_police_complaints_2016 <- chicago_police_complaints %>% filter(Year == "2016")
-dim(chicago_police_complaints_2016)
-#1331 incidences
 
 # use string pads to ensure consistency in "beat" codes in both shape files and complaints dataset
 
@@ -72,15 +59,13 @@ count_complaints_per_beat <- chicago_police_complaints_2016 %>% group_by(beat) %
 
 # Combine the dataset on complaints against police (by beats) with the beats points
 chicago_beat_2016 <- left_join(chicago_beat.points, count_complaints_per_beat, by = c("id" = "beat"))
-chicago_beat_2016
-
 
 ggplot(data=chicago_beat_2016, aes(long, lat, group = group, fill = freq)) +
   geom_polygon() +
   geom_path(color="#E5E4D4") +
   coord_equal(1.2) +
   theme_map + 
-  scale_fill_distiller(name = "No. of complaints \nagainst police officers", palette = "Spectral") + 
+  scale_fill_distiller(name = "No. of complaints \nagainst police officers", palette = "Spectral", limits = c(0, 30), breaks=seq(0,30,by=10)) + 
   labs(title = "Complaints against police highest in Chicago's South Side", subtitle="South Side and Far Southest Side generated highest number of complaints \nagainst police offciers in 2016.", caption = "Source: Invisible Institute and City of Chicago")
   
 
@@ -89,17 +74,7 @@ ggplot(data=chicago_beat_2016, aes(long, lat, group = group, fill = freq)) +
 ## read in Pakistan's districts shape file
 pakistan_district_map <- readOGR(dsn="pakistan_district", layer="pakistan_district")
 
-class(pakistan_district_map)
-pakistan_district_map@data
-
 pak_district.points <- fortify(pakistan_district_map, region="district")
-pak_district.points
-
-ggplot(data=pak_district.points, aes(long, lat, group = group)) +
-  geom_polygon() +
-  geom_path(color="gray") +
-  theme(legend.position="none") +
-  coord_equal()
 
 ## read in data on Pakistan Annual Status of Education Report
 ## Obtained from: Pakistan Data Portal (http://data.org.pk/frontend/web/masterdatasetdetails/index?dataset_id=433)
@@ -107,27 +82,61 @@ ggplot(data=pak_district.points, aes(long, lat, group = group)) +
 pak_educ_status <- read.csv("Annual_status_of_education_report_Pakistan.csv") 
 
 pak_educ_status$District <- as.character(pak_educ_status$District) 
-
 pak_educ_status$District <-  tolower(pak_educ_status$District) 
 
 pak_educ_status <- pak_educ_status %>% filter(Indicators == "Dropouts" & Age == "6-16 years")
 pak_educ_status$Value <- (as.numeric(pak_educ_status$Value))/100
-pak_educ_status
-dim(pak_educ_status)
-#330 data points
 
 pak_district_educ.df <- left_join(pak_district.points, pak_educ_status, by = c("id" = "District"))
-pak_district_educ.df
+
+pak_cities <- data.frame(
+  city= c("Islamabad","Lahore","Quetta","Peshawar","Karachi"),
+  long=c(73.066667,  74.343611, 67.000000, 71.583333,67.01),
+  lat=c(33.716667, 31.549722, 30.183333, 34.016667,24.86),
+  hjust=c(0,0,1,1,1),
+  vjust=c(-0.5,-0.5,-0.5,-0.5,0)
+)
+
+pak_cities_format <- list( xlab(""), ylab(""), coord_map("polyconic"), geom_point(aes(long,lat),data=pak_cities,size=2), geom_text(aes(x=long,y=lat,label=city,hjust=hjust,vjust=vjust),face="bold",size=3,data=pak_cities)
+)
 
 ggplot(data=pak_district_educ.df, aes(long, lat, group = group, fill = Value)) +
   geom_polygon() +
   geom_path(color="#E5E4D4") +
-  coord_map(1) +
-  theme(legend.position="bottom", legend.justification = c(0, 1), legend.text=element_text(size=7)) +
+  coord_equal(1) +
+  theme(legend.position="bottom", legend.justification = c(0, 1), legend.text=element_text(size=7), legend.background = element_rect(colour = NA), legend.key = element_rect(colour = "white", fill = NA)) +
   theme_map + 
-  scale_fill_distiller(name = "Dropout percentage", palette = "RdBu", limits = c(0, 0.25), breaks=seq(0,0.25,by=0.05), labels = percent) +
-  labs(title = "Complaints against police highest in Chicago's South Side", subtitle="South Side and Far Southest Side generated highest number of complaints \nagainst police offciers in 2016.", caption = "Source: Invisible Institute and City of Chicago")
+  #pak_cities_format +
+  scale_fill_distiller(name = "School dropout percentage", palette = "RdBu", limits = c(0, 0.25), breaks=seq(0,0.25,by=0.05), labels = percent) +
+  labs(title = "School drop out rate high in Southern Punjab and Eastern Balochistan", subtitle="High percentage of students aged between 6 and 16 years dropped out \nfrom school in 2014 in Balochistan and South of Punjab", caption = "Source: Idara-E-Taleem-O-Aagahi (ITA)")
 
 
+### map of 2014 exependiture spent on education in Pakistan
 
+# read in the exepnditure data (source: http://data.org.pk/frontend/web/masterdatasetdetails/index?dataset_id=70)
+pak_exp_2014 <- read.csv("85-PRSP 2013-14_Pakistan_Educ_expenditure.csv")
+pak_exp_2014 <- pak_exp_2014 %>% filter(Description == "Total primary education expenditure (in million)" | Description == "Total secondary education expenditure (in million)")
 
+pak_exp_2014$Value <- pak_exp_2014$Value/105.4 # (current exchange rate: USD 1= PKR 105.4)
+
+count_educspend_per_province <- pak_exp_2014 %>% group_by(Province) %>% summarise(educ_sum = sum(Value))
+count_educspend_per_province$Province <- as.character(count_educspend_per_province$Province)
+count_educspend_per_province$Province[[3]] = "Islamabad"
+count_educspend_per_province$Province[[4]] = "KP"
+count_educspend_per_province$Province[[5]] = "PUNJAB"
+count_educspend_per_province$Province[[6]] = "SINDH"
+
+#get the province points from shape file
+pak_provinces.points <- fortify(pakistan_district_map, region="province")
+
+# join data
+pak_educexp_educ.df <- left_join(pak_provinces.points, count_educspend_per_province, by = c("id" = "Province"))
+
+ggplot(data=pak_educexp_educ.df, aes(long, lat, group = group, fill = educ_sum)) +
+  geom_polygon() +
+  geom_path(color="#E5E4D4") +
+  coord_equal() +
+  theme(legend.position="bottom", legend.justification = c(0, 1), legend.text=element_text(size=8), legend.background = element_rect(colour = NA), legend.key = element_rect(colour = "white", fill = NA)) +
+  theme_map  +
+  scale_fill_distiller(name = "Education Expenditure \n(USD million)", limits = c(0, 450), breaks=seq(0,450,by=100)) +
+  labs(title = "Education expenditure in Punjab is ten times that of Balochistan", subtitle="Education Expenditure in Punjab was highest whereas lowest in the \nlargest province of Pakistan in 2014.", caption = "Source: Pakistan Ministry of Finance")
