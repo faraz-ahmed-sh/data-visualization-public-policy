@@ -1,0 +1,3 @@
+# We want to ignore the datasets with following extensions
+*.csv
+*.sas7bdat
