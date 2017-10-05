@@ -27,8 +27,8 @@ acc2014 <- mutate(acc2014, TWAY_ID2 = na_if(TWAY_ID2, ""))
 table(is.na(acc2014$TWAY_ID2))
 
 # dim
-dim(acc2014)
-dim(acc2015)
+dim(acc2014) # 30,056 rows and 50 columns
+dim(acc2015) # 32,166 rows and 52 columns
 
 # identifying columns in one dataset but not in another
 
@@ -49,13 +49,13 @@ acc <- bind_rows(acc2014, acc2015)
 
 # frequency table of the variable RUR_URB
 
-count(acc, RUR_URB) 
+count(acc$RUR_URB) 
 # 30,056 NA values exist because acc2014 dataset doesn't have this variable.
 # hence combining both datasets will create NA values for the acc2014 dataset
 
 # loading the "FIPS" dataset
 
-fips <- read_csv("Assignment 1/fips.csv")
+fips <- read_csv("fips.csv")
 glimpse(fips)
 
 acc$STATE <- as.character(acc$STATE)
@@ -69,10 +69,33 @@ acc$COUNTY <- str_pad(acc$COUNTY, 3, side="left", pad = 0)
 # Rename variables names
 acc <- rename(acc, c("STATE" = "StateFIPSCode", "COUNTY" = "CountyFIPSCode"))
 acc
+
 # left join of two tibbles
+
 acc_merge <- left_join(acc, fips, by = c("StateFIPSCode" = "StateFIPSCode", "CountyFIPSCode" =  "CountyFIPSCode"))
-dim(acc_merge)
-dim(acc)
-#"acc" and "acc_merge" both have the same number of rows
 
+# summary of fatalities by state for each of the past two years
 
+by_state_year <- group_by(acc_merge, StateName, YEAR)
+agg <- summarise(by_state_year, total_fatalities = count(acc_merge$FATALS))
+
+# spread
+agg_wide <- spread(agg, key = StateName, value = total_fatalities)
+
+# mutate to calculate % differerence
+agg_wide_new <- mutate(agg_wide, lag = lag(total_fatalities)) %>% 
+  mutate(percent_difference =  ((total_fatalities-lag)/lag)*100)
+
+# arrange
+agg_wide_final <- arrange(agg_wide_new, desc(percent_difference))
+
+# filter
+agg_wide_final <- filter(agg_wide_final, percent_difference > 15 & !is.na(StateName))
+
+# Using chain operator to perform the operations above in a single pass
+agg_final <- mutate(agg) %>%
+  group_by(StateName) %>%
+  mutate(lag = lag(total_fatalities)) %>%
+  mutate(percent_difference = (total_fatalities - lag)/lag) %>%
+  arrange(desc(percent_difference)) %>%
+  filter(percent_difference > 15 & !is.na(StateName))
