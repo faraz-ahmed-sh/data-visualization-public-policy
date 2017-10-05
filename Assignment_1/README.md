@@ -1,4 +1,4 @@
-Data Viz Assignment 1
+# Data Viz Assignment 1
 
 This is an intro to R and Git assignment.
 
