@@ -56,4 +56,5 @@ ggplot(summ_times, aes(Time, freq)) + geom_point(size=1.5, color="red") +
   labs(title = "When Are You Most Likely to be Robbed?", x = "Hour of the day", y = "Crime Rate", subtitle="Most crimes in Lahore happened between 2.00pm and 8.00pm in January 2015.") + 
   t_title + t_axis + t_subtitle
 
-#ggsave('myplot.pdf',width=18, height=14, units="in")
+ggsave('myplot.pdf', width = 13, height = 8.5, device = cairo_pdf, scale = 1, dpi=300)
+??ggsave()
