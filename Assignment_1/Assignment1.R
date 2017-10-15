@@ -49,7 +49,7 @@ acc <- bind_rows(acc2014, acc2015)
 
 # frequency table of the variable RUR_URB
 
-count(acc$RUR_URB) 
+count(acc, RUR_URB) 
 # 30,056 NA values exist because acc2014 dataset doesn't have this variable.
 # hence combining both datasets will create NA values for the acc2014 dataset
 
@@ -67,7 +67,7 @@ acc$STATE <- str_pad(acc$STATE, 2, side="left", pad = 0)
 acc$COUNTY <- str_pad(acc$COUNTY, 3, side="left", pad = 0)
 
 # Rename variables names
-acc <- rename(acc, c("STATE" = "StateFIPSCode", "COUNTY" = "CountyFIPSCode"))
+acc <- rename(acc, "StateFIPSCode" = "STATE", "CountyFIPSCode" = "COUNTY")
 acc
 
 # left join of two tibbles
@@ -77,13 +77,14 @@ acc_merge <- left_join(acc, fips, by = c("StateFIPSCode" = "StateFIPSCode", "Cou
 # summary of fatalities by state for each of the past two years
 
 by_state_year <- group_by(acc_merge, StateName, YEAR)
-agg <- summarise(by_state_year, total_fatalities = count(acc_merge$FATALS))
+agg <- summarise(by_state_year, total_fatalities = (freq = n()))
 
 # spread
-agg_wide <- spread(agg, key = StateName, value = total_fatalities)
+agg_wide <- spread(agg, key = YEAR, value = total_fatalities)
+agg_wide
 
 # mutate to calculate % differerence
-agg_wide_new <- mutate(agg_wide, lag = lag(total_fatalities)) %>% 
+agg_wide_new <- mutate(agg, lag = lag(total_fatalities)) %>% 
   mutate(percent_difference =  ((total_fatalities-lag)/lag)*100)
 
 # arrange
@@ -91,11 +92,15 @@ agg_wide_final <- arrange(agg_wide_new, desc(percent_difference))
 
 # filter
 agg_wide_final <- filter(agg_wide_final, percent_difference > 15 & !is.na(StateName))
+glimpse(agg_wide_final)
 
 # Using chain operator to perform the operations above in a single pass
-agg_final <- mutate(agg) %>%
-  group_by(StateName) %>%
+agg_final <- 
+  mutate(agg) %>%
   mutate(lag = lag(total_fatalities)) %>%
-  mutate(percent_difference = (total_fatalities - lag)/lag) %>%
+  mutate(percent_difference = ((total_fatalities - lag)/lag)*100) %>%
   arrange(desc(percent_difference)) %>%
   filter(percent_difference > 15 & !is.na(StateName))
+
+agg_final
+glimpse(agg_final)
