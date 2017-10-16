@@ -33,7 +33,7 @@ colnames(FIR_2015_data)[1] <- "Neighborhood"
 t_title <- theme(plot.title = element_text(family="Times New Roman", face="bold", size=20, hjust=0.5))
 t_axis <- theme(axis.title = element_text(family = "Arial",size=11))
 t_subtitle <- theme(plot.subtitle=element_text(size=11, hjust=0.5, face="italic", color="black"))
-t_caption <- theme(plot.caption=element_text(size=4, face="italic", color="black"))
+t_caption <- theme(plot.caption=element_text(size=8, face="italic", color="black"))
 ```
 
 ## Graph 1:
@@ -48,7 +48,7 @@ ggplot(data=summ_crimes_by_neighborhood, aes(x = Neighborhood, y= freq)) +
   geom_bar(stat="identity", width=0.6, fill="tomato2") +
   theme(aspect.ratio = .6) +
   scale_y_continuous(breaks = (seq(0, 500, by = 50))) +
-  labs(title = "What Places in Lahore are Most Crime-Prone?", x = "Neighborhood", y = "Frequency of Crime Incidences", subtitle="Number of crime occurrences in   different neighborhoods in January 2015.", caption = "Source: Punjab Police Department") + t_title + t_axis + t_subtitle + 
+  labs(title = "What Places in Lahore are Most Crime-Prone?", x = "Neighborhood", y = "Frequency of Crime Incidences", subtitle="Number of crime occurrences in   different neighborhoods in January 2015.", caption = "Source: Punjab Police Department") + t_title + t_axis + t_subtitle + t_caption + 
 theme(axis.text.x = element_text(angle=65, vjust=0.6))
 ```
 
@@ -65,7 +65,7 @@ theme_set(theme_bw())
 ggplot(data=summ_crimes_by_neighborhood, aes(x = Neighborhood, y = `Crime Type`, size = freq)) + 
   geom_point() +
   labs(title = "Which Crime Takes Place Where?", x = "Neighborhood", y = "Total Crime Incidences (January 2015)", subtitle="Crime rate of different crime types in different neighborhoods of Lahore in January 2015.", caption = "Source: Punjab Police Department") +
-  t_title + t_axis + t_subtitle
+  t_title + t_axis + t_subtitle + t_caption
 ```
 This chart shows that robbery, overspeeding, begging, arms possession and motorcycle theft are the most common types of crimes that occur in [Lahore](https://www.geo.tv/latest/130148-After-Karachi-street-crimes-on-the-rise-in-Lahore). Incidences of robbery and motorcycle theft are highest in Iqbal Town and Nishtar Town and lowest in Ravi Town and Shalamar Town. Incidences of begging appear to be almost the same in each neighborhood, although it is unclear what constitutes as a *begging crime*. Finally, overspeeding seems to be much more common in Gulberg than in other areas, which is one of the busiest neighborhoods, both commercial- and residence-wise.
 
@@ -82,7 +82,7 @@ ggplot(summ_times, aes(Time, freq)) + geom_point(col="tomato2", size=1.5) +
   theme(aspect.ratio = .6) +
   scale_x_datetime(date_breaks=("2 hour"), date_labels=("%H:%M")) +
   labs(title = "When Are You Most Likely to be Robbed?", x = "Hour of the day", y = "Total Crime Incidences every 5 minutes", subtitle="Most crimes in Lahore happened between 2.00pm and 8.00pm in January 2015.", caption = "Source: Punjab Police Department") + 
-  t_title + t_axis + t_subtitle
+  t_title + t_axis + t_subtitle + t_caption
 ```
 
 There is a lot of variation in how often crime takes place in different time periods of the day. The chart shows that the occurrence of crimes spike after the noon, reach its peak between 4.00pm and 6.00pm and then slows down with some higher crime frequency occuring at midnight. 
@@ -110,7 +110,7 @@ ggplot(by_wday_crime_count, aes(x = hour, y = week_day, fill = freq)) +
   scale_x_discrete(limits = c("0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00")) +
   scale_fill_gradient(low="#FFFB3F", high="#BA3833", limits=c(0, 80), na.value="transparent") +
   labs(title = "Crime Distribution Across Week Days", x = "Hour of the day", y = "Day of the week", subtitle="Most crimes in Lahore occurred on Thurs, Fri and Sat during midday and early afternoon in January 2015.", caption = "Source: Punjab Police Department") + 
-  t_title + t_axis + t_subtitle + 
+  t_title + t_axis + t_subtitle + t_caption
   theme(strip.text.x = element_text(size = 8))
 ```
 
