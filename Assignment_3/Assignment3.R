@@ -62,15 +62,26 @@ ggsave('myplot2.pdf', width = 12, height = 16, device = cairo_pdf, dpi=300)
 
 # change Date type and create a new variable called "Month"
 FIR_2015_data$Date <- dmy(FIR_2015_data$Date)
-FIR_2015_data$week_day <- wday(FIR_2015_data$Date)
+FIR_2015_data$Date
+FIR_2015_data$week_day <- wday(FIR_2015_data$Date, label = TRUE)
+FIR_2015_data$week_day
+
+#fix the hours (2)
+#FIR_2015_data$hour2 <- as.POSIXct(FIR_2015_data$Time, format="%H%M")
+#FIR_2015_data$hour2
 
 # Fix the time to hours
+#ymd_hms(FIR_2015_data$Time)
 FIR_2015_data$hour <- hour(FIR_2015_data$Time)
+FIR_2015_data$hour
 
-
-
-# summarise the count of crimes according to months
-by_wday_crime_count <- FIR_2015_data %>% group_by(week_day, Time) %>% summarise(freq = n())
+# summarise the count of crimes according to wday and time
+by_wday_crime_count <- FIR_2015_data %>% group_by(week_day, hour2) %>% summarise(freq = n())
 by_wday_crime_count
 
+ggplot(by_wday_crime_count, aes(x = hour2, y = week_day, fill = freq)) + 
+  geom_tile() +
+  #scale_y_continuous(breaks = (seq(0, 7, by = 1))) + 
+  scale_x_datetime(date_breaks=("2 hour"), date_labels=("%H:%M")) #+
+  #scale_x_continuous(breaks = (seq(0, 24, by = 2)))
 
