@@ -4,6 +4,7 @@ library("ggplot2")
 library("lubridate")
 library("viridis")
 library("extrafont")
+library("rmarkdown")
 font_import() # import all your fonts
 fonts() #get a list of fonts
 fonttable()
