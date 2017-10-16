@@ -2,6 +2,14 @@ library("dplyr")
 library("readr")
 library("ggplot2")
 library("lubridate")
+library("viridis")
+library("extrafont")
+font_import() # import all your fonts
+fonts() #get a list of fonts
+fonttable()
+fonttable()[40:45,] 
+
+theme_set(theme_classic())
 
 # reading the data
 FIR_2015_data <- read_csv("Data/Full_FIR_Details_2015(1).csv")
@@ -16,28 +24,31 @@ colnames(FIR_2015_data)[1] <- "Neighborhood"
 # Common themes for axes
 
 t_title <- theme(plot.title = element_text(family="Times New Roman", face="bold", size=20, hjust=0.5))
-t_axis <- theme(axis.title = element_text(family = "Arial",size=13))
-t_subtitle <- theme(plot.subtitle=element_text(size=12, hjust=0.5, face="italic", color="black"))
+t_axis <- theme(axis.title = element_text(family = "Arial",size=11))
+t_subtitle <- theme(plot.subtitle=element_text(size=11, hjust=0.5, face="italic", color="black"))
+t_caption <- theme(plot.caption=element_text(size=6, face="italic", color="black"))
 
 # Graph 1: plot the count of number of total crimes in different neighborhoods
 
-by_neighborhood <- group_by(FIR_2015_data, Neighborhood, `Crime Type`)
-summ_crimes_by_neighborhood <-  summarise(by_neighborhood, freq = n())
-summ_crimes_by_neighborhood
+summ_crimes_by_neighborhood <- group_by(FIR_2015_data, Neighborhood, `Crime Type`) %>% 
+  summarise(freq = n())
 
 ggplot(data=summ_crimes_by_neighborhood, aes(x = Neighborhood, y= freq)) + 
-  geom_bar(stat="identity", width=0.6, fill="brown") +
+  geom_bar(stat="identity", width=0.6, fill="tomato2") +
   theme(aspect.ratio = .6) +
   scale_y_continuous(breaks = (seq(0, 500, by = 50))) +
-  labs(title = "What Places in Lahore are Most Crime-Prone?", x = "Neighborhood", y = "Crime Rate", subtitle="Crime rate in different neighborhoods in January 2015.") +
-  t_title + t_axis + t_subtitle
-  
+  labs(title = "What Places in Lahore are Most Crime-Prone?", x = "Neighborhood", y = "Frequency of Crime Incidences", subtitle="Number of crime occurrences in different neighborhoods in January 2015.", caption = "Source: Punjab Police Department") +
+  t_title + t_axis + t_subtitle +
+  theme(axis.text.x = element_text(angle=65, vjust=0.6),
+        plot.background=element_rect(fill="#f7f7f7"))
+
+theme_set(theme_bw())
 
 # Graph 2: plot the number of crimes by neighborhoods and crime type
 
 ggplot(data=summ_crimes_by_neighborhood, aes(x = Neighborhood, y = `Crime Type`, size = freq)) + 
   geom_point() +
-  labs(title = "Which Crime Takes Place Where?", x = "Neighborhood", y = "Crime Type", subtitle="Rate of different crime types in different neighborhoods of Lahore in January 2015.") +
+  labs(title = "Which Crime Takes Place Where?", x = "Neighborhood", y = "Total Crime Incidences (January 2015)", subtitle="Crime rate of different crime types in different neighborhoods of Lahore in January 2015.", caption = "Source: Punjab Police Department") +
   t_title + t_axis + t_subtitle
 
 
@@ -48,15 +59,16 @@ summ_times <- summarise(by_time, freq = n())
 summ_times
 
 summ_times$Time <- as.POSIXct(summ_times$Time, format="%H%M%S")
+summ_times
 
-ggplot(summ_times, aes(Time, freq)) + geom_point(size=1.5, color="red") + 
-  geom_smooth(method = "lm", se = FALSE) +
+ggplot(summ_times, aes(Time, freq)) + geom_point(col="tomato2", size=1.5) + 
+  geom_smooth(method="loess", span=0.4, se=TRUE, alpha=0.3) +
   theme(aspect.ratio = .6) +
   scale_x_datetime(date_breaks=("2 hour"), date_labels=("%H:%M")) +
-  labs(title = "When Are You Most Likely to be Robbed?", x = "Hour of the day", y = "Crime Rate", subtitle="Most crimes in Lahore happened between 2.00pm and 8.00pm in January 2015.") + 
+  labs(title = "When Are You Most Likely to be Robbed?", x = "Hour of the day", y = "Total Crime Incidences every 5 minutes", subtitle="Most crimes in Lahore happened between 2.00pm and 8.00pm in January 2015.", caption = "Source: Punjab Police Department") + 
   t_title + t_axis + t_subtitle
 
-ggsave('myplot2.pdf', width = 12, height = 16, device = cairo_pdf, dpi=300)
+#ggsave('myplot2.pdf', width = 12, height = 16, device = cairo_pdf, dpi=300)
 
 # Graph 4: heatmap
 
@@ -66,22 +78,36 @@ FIR_2015_data$Date
 FIR_2015_data$week_day <- wday(FIR_2015_data$Date, label = TRUE)
 FIR_2015_data$week_day
 
-#fix the hours (2)
-#FIR_2015_data$hour2 <- as.POSIXct(FIR_2015_data$Time, format="%H%M")
-#FIR_2015_data$hour2
-
 # Fix the time to hours
 #ymd_hms(FIR_2015_data$Time)
 FIR_2015_data$hour <- hour(FIR_2015_data$Time)
 FIR_2015_data$hour
 
 # summarise the count of crimes according to wday and time
-by_wday_crime_count <- FIR_2015_data %>% group_by(week_day, hour2) %>% summarise(freq = n())
+by_wday_crime_count <- FIR_2015_data %>% group_by(week_day, hour) %>% summarise(freq = n())
 by_wday_crime_count
+k <- "00"
+by_wday_crime_count$hour <- paste(by_wday_crime_count$hour, k, sep =":")
 
-ggplot(by_wday_crime_count, aes(x = hour2, y = week_day, fill = freq)) + 
+ggplot(by_wday_crime_count, aes(x = hour, y = week_day, fill = freq)) + 
   geom_tile() +
-  #scale_y_continuous(breaks = (seq(0, 7, by = 1))) + 
-  scale_x_datetime(date_breaks=("2 hour"), date_labels=("%H:%M")) #+
-  #scale_x_continuous(breaks = (seq(0, 24, by = 2)))
+  scale_x_discrete(limits = c("0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00")) +
+  scale_fill_gradient(low="#FFFB3F", high="#BA3833", limits=c(0, 80), na.value="transparent") +
+  labs(title = "Crime Distribution Across Week Days", x = "Hour of the day", y = "Day of the week", subtitle="Most crimes in Lahore occurred on Thurs, Fri and Sat during midday and early afternoon in January 2015.", caption = "Source: Punjab Police Department") + 
+  t_title + t_axis + t_subtitle
+  
 
+# Graph 5: facet grid
+
+by_wday_area_crime_count <- FIR_2015_data %>% group_by(week_day, Neighborhood) %>% summarise(freq = n())
+by_wday_area_crime_count
+
+ggplot(by_wday_area_crime_count, aes(x = week_day, y = freq)) + 
+  geom_bar(stat="identity", fill = "#7258BA") +
+  facet_wrap(~Neighborhood, ncol = 2) + 
+  labs(title = "In Lahore, Be Careful on Weekends", x = "Day of the Week", y = "Total Crime Incidences in January 2015", subtitle="Most crimes in Lahore occurred on Thurs, Fri and Sat during midday and early afternoon in January 2015.", caption = "Source: Punjab Police Department") + 
+  t_title + t_axis + t_subtitle + t_caption +
+  theme(aspect.ratio = 0.65) +
+  theme(axis.text.x = element_text(angle = 90),
+        strip.text = element_text(face = "plain", 
+                                  size = rel(0.5)))
