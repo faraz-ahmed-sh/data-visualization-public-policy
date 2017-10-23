@@ -86,7 +86,6 @@ theme_simple_no_border <- theme(plot.title = element_text(family="Palatino", fac
 )
 ```
 
-### Areas with highest number of crime incidences:
 
 ```{r graph1, echo = FALSE, fig.width=9, fig.height=7}
 
@@ -102,14 +101,12 @@ ggplot(data=summ_crimes_by_neighborhood_and_type, aes(x = Neighborhood, y= freq)
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
 ```
 
-The chart shows that most crimes in January 2015 occurred in Nishtar Town, Iqbal Town and Wagha Town whereas Ravi Town and Aziz Bhatti Town registered the lowest number of crime incidences in the same month. 
+most crime activities tend to generate from Iqbal Town, Nishtar Town, and Wagha Town. These three areas together contribute more than 50 percent of the total crime rate of Lahore. Iqbal Town and Nishtar Town are located in the southeastern and southern parts of Lahore, respectively, and are home to a number of commercial, residential and educational activities, including the oldest open university of Pakistan, Allama Iqbal Open University. 
 
-It is not surprising most crime-prone areas such as Iqbal Town are the hub of commercial activities in the city and tend to be busy throughout the day. Road traffic accidents thus tend to be common. A bigger population of middle class families live in these areas, making them a soft target of criminals.
+The population density per square kilometer area and a relatively higher level of income of the families who live in these areas make Iqbal Town and Nishtar Town the most dangerous towns of Lahore.
 
 
-### Types of crime incidences in different areas:
-
-```{r graph2, echo = FALSE, fig.width=14, fig.height=12}
+```{r graph2, echo = FALSE, fig.width=15, fig.height=13}
 
 # find out the top 15 crime types
 by_crime_type <- group_by(new, `Crime Type`) %>% summarise(freq = n())
@@ -121,18 +118,20 @@ final_by_neighborhood <- group_by(crime_type_final, Neighborhood, `Crime Type`) 
 
 ggplot(data=final_by_neighborhood, aes(x = Neighborhood, y = `Crime Type`, size = freq, color=freq)) + 
   geom_point() +
-  labs(title = "Top 15 common types of crime in Lahore", x = "Neighborhood", y = "Type of crime", subtitle="Number of crime incidences of various crime types in \ndifferent neighborhoods in 2014.", caption = "Source: Punjab Police Department") +
+  labs(title = "Top 15 common types of crime in Lahore", x = "Neighborhood", y = "Type of crime", subtitle="Number of crime incidences of various crime types in different neighborhoods in 2014.", caption = "Source: Punjab Police Department") +
   guides(color=guide_legend(title="Number of \nCrime Incidences"), size=guide_legend(title="Number of \nCrime Incidences")) +
   theme_simple_no_border + 
   theme(aspect.ratio = 1.0) + 
   theme(panel.background = element_rect(fill = '#E8D85F')) +
   theme(axis.text.x = element_text(angle=90, vjust=0.6))
 ```
-This chart shows that robbery, overspeeding, begging, arms possession and motorcycle theft are the most common types of crimes that occur in [Lahore](https://www.geo.tv/latest/130148-After-Karachi-street-crimes-on-the-rise-in-Lahore). Incidences of robbery and motorcycle theft are highest in Iqbal Town and Nishtar Town and lowest in Ravi Town and Shalamar Town. Incidences of begging appear to be almost the same in each neighborhood, although it is unclear what constitutes as a *begging crime*. Finally, overspeeding seems to be much more common in Gulberg than in other areas, which is one of the busiest neighborhoods, both commercial- and residence-wise.
+
+These three towns also report highest number of cases for motorcycle theft and robbery ??? two main types of crime activities recorded in Lahore. In 2016, the number of vehicle theft increased so much that the Punjab Police had to establish checkpoints to ensure that the engine number of cars matched the record provided by the authorities. Robbery also tends to be higher in Gulberg and Samanabad Town ??? both of which are highly residential areas.
+
+Cases of narcotics, besides originating from the three high crime-prone areas, also come from Data Gunj Baksh Town. This Town is home to Data Darbar, the largest sufi shrine in South Asia and the most sacred place in Lahore. However, sufis and malangs from different income backgrounds frequent this place and consume charas/hashish (narcotics) often.
 
 
-### Average total number of crime incidences that occur in different time periods of the day
-```{r graph3, echo = FALSE, fig.width=8, fig.height=6}
+```{r graph3, echo = FALSE, fig.width=10, fig.height=8}
 new$Date <- dmy(new$Date)
 new$Month <- month(new$Date, label = TRUE)
 new$week_day <- wday(new$Date, label = TRUE)
@@ -156,13 +155,11 @@ ggplot(by_wday_crime_count, aes(x = hour, y = Month, fill = freq)) +
   theme(aspect.ratio = 0.7)
 ```
 
-There is a lot of variation in how often crime takes place in different time periods of the day. The chart shows that the occurrence of crimes spike after the noon, reach its peak between 4.00pm and 6.00pm and then slows down with some higher crime frequency occuring at midnight. 
+Moreover, for an urban city like Lahore, it is a bit surprising to find out that that fewer incidences of crime take place after midnight and before noon. The city is a happening place at night because of its reputation for good food, but it does get its share of quiet time after midnight. However, most instances of crime seem to take place right during the midday and through the rest of the day until midnight.
 
-This is a surprising pattern since one would assume that most crimes take place during the night when people are inactive. It turns out that perpetrators of crime take advantage of quiet streets during the day and attack pedestrians as they walk. 
+The rate of crime also appears to behave consistently across all the months of 2014. There really is no break for the perpetrators in the colder months! 
 
 
-
-### Distribution of crime incidences across all the week days:
 ```{r graph4, echo = FALSE, fig.width=10, fig.height=8}
 # change Date type and create a new variable called "Month"
 crime_type_list <- list(desc_crimetype$`Crime Type`)
@@ -243,12 +240,9 @@ ggplot(by_crime_cat_crime_count, aes(area = freq, fill = Crime_Category, label =
 
 ```
 
-While we know that most crimes take place early and late afternoon, one can wonder if that pattern is common across all the days of the week. This chart demonstrates that Thursday, Friday and Saturday tend to be most crime-prone days of the week. During the week days, people barely go out to dine or take a walk. On the weekends, the traffic in Lahore increases, especially in the afternoon, because families come out to shop and dine, thereby resulting in higher chances of traffic accidents and incidences of robbery.
+"Other Crimes" that include people/groups caught under arms ordinance act, and crimes of overspeeding, narcotics and price control tend to be the most prominent crime category in 2014. This is followed by Crimes Against Property, Miscellaneous and Crimes Against Person.
 
-Moreover, it could also be seen that during such days, the incidences of crime tend to be higher in the afternoon than the incidences of crime in other week days.
-
-### Distribution crime incidences across the week days by neighborhoods:
-```{r graph5, echo = FALSE, fig.width=10, fig.height=8}
+```{r graph5, echo = FALSE, fig.width=8, fig.height=7}
 # Graph 5:
 
 by_month_crime_type_cat <- group_by(new_merge, Crime_Category, Month)  %>% summarise(freq = n())
@@ -264,9 +258,9 @@ ggplot(by_month_crime_type_cat, aes(Month, freq, group = Crime_Category, color =
     theme_fancy
 ```
 
-This chart supports the evidence shown in the previous graph. Residents in Lahore during the weekends are more susceptible to attack not just in one area, but across all the areas of Lahore. Sunday does not register a lot of crime incidences, surprisingly. This may be possible because even though more families go out to shop and dine on Sunday, they are protected by a large group of police officers who have stricter duties on Sundays. Monday and Tuesday consistently generate a very low frequency of crimes, which increases gradually on Wednesday and by a large amount in some areas on Thursdays.
+Categories of "Other Crimes" and "Miscellaneous" seem to be correlated with each other, especially in the second half of the year. This means that crime prevention can be two-prong -- the strategy used to prevent "Other Crimes" can be used to prevent crimes that take place in the category of "Miscellaneous".
 
-```{r graph6, echo = FALSE}
+```{r graph6, echo = FALSE, fig.width=12, fig.height=10}
 # on data from 2010 to 2014
 new_all_data <- FIR_crime_data %>% filter(year %in% c("10", "11", "12", "13", "14"))
 new_all_data$Date <- dmy(new_all_data$Date)
@@ -293,9 +287,9 @@ ggplot(new_all_data_crime_count, aes(x=monthweek, y=week_day, fill = freq_)) +
   theme(aspect.ratio = 1.4)
 ```
 
+The number of crime incidences that occur each year has increased by over 600 times from 2010 to 2014. This result is owing to a number of economic and social factors such as urbanisation, migration, and growth of militant/extremist groups. This result is also possible because of lack of data collection in the earlier years of this decade.
 
-
-```{r graph7, echo = FALSE}
+```{r graph7, echo = FALSE, fig.width=11, fig.height=9}
 #First find the average of all the crimes for the year 2014
 
 count_all_crime_types <- new %>% group_by(`Crime Type`) %>% dplyr::summarise(freq_ = n()) 
@@ -313,13 +307,13 @@ ggplot(data = count_all_crime_types, aes(x=`Crime Type`, y=freq_z, label=freq_z)
   geom_bar(stat='identity', aes(fill=crime_type_status), width=.5)  +
   scale_fill_manual(name="Total Number of \nCrime Incidences", 
                     labels = c("Above Average", "Below Average"), 
-                    values = c("above"="#00ba38", "below"="#f8766d")) + 
-  labs(x="Crime Type",
-       y="Deviation from zero",
-       title = "Only 25% of all crime types are the most significant",
-       subtitle="Most crime types below the average number of crime incidences have the same frequency where as \ncrime types above average have a large difference in crime frequency between each other.",
+                    values = c("above"="#00ba38", "below"="#f8766d")) +
+  labs(x="Crime Type", y="Deviation from zero", title = "Only 25% of all crime types are the most significant", subtitle="Most crime types below the average number of crime incidences have the same frequency where as \ncrime types above average have a large difference in crime frequency between each other.",
        caption = "Source: Punjab Police Department",
        fill="Number of \nCrime Incidences") +
-  coord_flip() + theme_fancy 
+  coord_flip() + theme_fancy
 ```
 
+This chart shows the crime types that occurred most frequently or least frequently depending on how far they were from the "average" crime rate in 2014. The average crime rate in 2014 was just above 1,000 crime incidences/crime type. 
+
+The chart further demonstrates that there is a lot of variability in the crime frequency of crime types that are "above average" and very low variable in the crime frequency of crime types that are "below average". This means that by focusing on preventing the crime types that are "above average", law enforcement agencies can drastically bring down the crime rate of Lahore.
