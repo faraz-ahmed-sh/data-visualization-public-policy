@@ -23,12 +23,12 @@ t_subtitle <- theme(plot.subtitle=element_text(size=11, family="Georgia", hjust=
 t_axis <- theme(axis.title = element_text(family = "Franklin Gothic Book",size=12, color="#635F5D", margin = margin(22, 0, 22, 0)))
 axis_labels <- theme(axis.text=element_text(size=10))
 t_caption <- theme(plot.caption=element_text(family = "Georgia", hjust = 0, size=8, face="italic", color="black"))
-#caption_background <- theme(caption.background = element_rect(fill = '#978F80'))
 panel_background <- theme(panel.background = element_rect(fill = '#bdbdbd'))
 color_plot <- theme(plot.background = element_rect(fill = '#E5E2E0'))
 
 
 # Graph 1: plot the count of number of total crimes in different neighborhoods
+#theme_set(theme_classic())
 
 summ_crimes_by_neighborhood <- group_by(FIR_2015_data, Neighborhood, `Crime Type`) %>% 
   summarise(freq = n())
@@ -37,7 +37,7 @@ ggplot(data=summ_crimes_by_neighborhood, aes(x = Neighborhood, y= freq)) +
   geom_bar(stat="identity", width=0.6, fill="tomato2") +
   theme(aspect.ratio = .6) +
   scale_y_continuous(breaks = (seq(0, 500, by = 50))) +
-  labs(title = "What Places in Lahore are Most Crime-Prone?", x = "Neighborhood", y = "Frequency of Crime Incidences", subtitle="Highest crime occurrences Number of crime occurrences in different neighborhoods in January 2015.", caption = "Source: Punjab Police Department") +
+  labs(title = "What Places in Lahore are Most Crime-Prone?", x = "Neighborhood", y = "Number of Crime Incidences in January 2015", subtitle="Highest number of crime occurrences happened in the Southeast part of Lahore in January 2015.", caption = "Source: Punjab Police Department") +
   theme_economist() + 
   t_title + t_axis + t_subtitle + t_caption +
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
@@ -48,7 +48,7 @@ theme_set(theme_bw())
 
 ggplot(data=summ_crimes_by_neighborhood, aes(x = Neighborhood, y = `Crime Type`, size = freq)) + 
   geom_point() +
-  labs(title = "Which Crime Takes Place Where?", x = "Neighborhood", y = "Total Crime Incidences (January 2015)", subtitle="Crime rate of different crime types in different neighborhoods of Lahore in January 2015.", caption = "Source: Punjab Police Department") +
+  labs(title = "Which Crime Takes Place Where?", x = "Neighborhood", y = "Number of Crime Incidences per Neighborhood", subtitle="Crime rate of different crime types in different neighborhoods of Lahore in January 2015.", caption = "Source: Punjab Police Department") +
   t_title + t_axis + t_subtitle + t_caption + panel_background
 
 
@@ -63,8 +63,8 @@ ggplot(summ_times, aes(Time, freq)) + geom_point(col="tomato2", size=1.5) +
   geom_smooth(method="loess", span=0.4, se=TRUE, alpha=0.3) +
   theme(aspect.ratio = .6) +
   scale_x_datetime(date_breaks=("2 hour"), date_labels=("%H:%M")) +
-  labs(title = "When Are You Most Likely to be Robbed?", x = "Hour of the day", y = "Total Crime Incidences every 5 minutes", subtitle="Most crimes in Lahore happened between 2.00pm and 8.00pm in January 2015.", caption = "Source: Punjab Police Department") + 
-  theme_wsj() + t_title + t_axis + t_subtitle + t_caption
+  labs(title = "When Are You Most Likely to be Robbed?", x = "Hour of the day", y = "Number of Crime Incidences per minute", subtitle="Most crimes in Lahore happened between 2.00pm and 8.00pm in January 2015.", caption = "Source: Punjab Police Department") + 
+  theme_wsj() + t_title + t_axis + t_subtitle + t_caption + axis_labels
 
 #ggsave('myplot2.pdf', width = 12, height = 16, device = cairo_pdf, dpi=300)
 
@@ -86,7 +86,7 @@ ggplot(by_wday_crime_count, aes(x = hour, y = week_day, fill = freq)) +
   geom_tile() +
   scale_x_discrete(limits = c("0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00")) +
   scale_fill_gradient(low="#FFFB3F", high="#BA3833", limits=c(0, 80), na.value="transparent") +
-  labs(title = "Crime Distribution Across Week Days", x = "Hour of the day", y = "Day of the week", subtitle="Most crimes in Lahore occurred on Thurs, Fri and Sat during midday and early afternoon in January 2015.", caption = "Source: Punjab Police Department") + 
+  labs(title = "Crime Distribution Across Week Days", x = "Hour of the day", y = "Day of the week", subtitle="Most crimes in Lahore occurred on Thursday, Friday and Saturday during midday and early afternoon in January 2015.", caption = "Source: Punjab Police Department") + 
   t_title + t_axis + t_subtitle + t_caption
   
 
@@ -97,7 +97,7 @@ by_wday_area_crime_count <- FIR_2015_data %>% group_by(week_day, Neighborhood) %
 ggplot(by_wday_area_crime_count, aes(x = week_day, y = freq)) + 
   geom_bar(stat="identity", fill = "#7258BA") +
   facet_wrap(~Neighborhood, ncol = 2) + 
-  labs(title = "In Lahore, Be Careful on Weekends", x = "Day of the Week", y = "Total Crime Incidences in January 2015", subtitle="Most crimes in Lahore occurred on Thurs, Fri and Sat during midday and early afternoon in January 2015.", caption = "Source: Punjab Police Department") + 
+  labs(title = "In Lahore, Be Careful on Weekends", x = "Day of the Week", y = "Number of Crime Incidences in January 2015", subtitle="Most neighborhoods of Lahore are crime-prone on Thursday, Friday and Saturday during midday and early afternoon in January 2015.", caption = "Source: Punjab Police Department") + 
   t_title + t_axis + t_subtitle + t_caption +
   theme(aspect.ratio = 0.65) +
   theme(axis.text.x = element_text(angle = 90),

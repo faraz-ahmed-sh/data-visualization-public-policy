@@ -48,7 +48,7 @@ panel_background <- theme(panel.background = element_rect(fill = '#bdbdbd'))
 color_plot <- theme(plot.background = element_rect(fill = '#E5E2E0'))
 ```
 
-## Areas with highest number of crime incidences:
+### Areas with highest number of crime incidences:
 
 ```{r graph1, fig.width=7, fig.height=6}
 
@@ -70,7 +70,7 @@ The chart shows that most crimes in January 2015 occurred in Nishtar Town, Iqbal
 It is not surprising most crime-prone areas such as Iqbal Town are the hub of commercial activities in the city and tend to be busy throughout the day. Road traffic accidents thus tend to be common. A bigger population of middle class families live in these areas, making them a soft target of criminals.
 
 
-## Types of crime incidences in different areas:
+### Types of crime incidences in different areas:
 
 ```{r graph2, fig.width=14, fig.height=12}
 
@@ -84,7 +84,7 @@ ggplot(data=summ_crimes_by_neighborhood, aes(x = Neighborhood, y = `Crime Type`,
 This chart shows that robbery, overspeeding, begging, arms possession and motorcycle theft are the most common types of crimes that occur in [Lahore](https://www.geo.tv/latest/130148-After-Karachi-street-crimes-on-the-rise-in-Lahore). Incidences of robbery and motorcycle theft are highest in Iqbal Town and Nishtar Town and lowest in Ravi Town and Shalamar Town. Incidences of begging appear to be almost the same in each neighborhood, although it is unclear what constitutes as a *begging crime*. Finally, overspeeding seems to be much more common in Gulberg than in other areas, which is one of the busiest neighborhoods, both commercial- and residence-wise.
 
 
-## Average total number of crime incidences that occur in different time periods of the day
+### Average total number of crime incidences that occur in different time periods of the day
 ```{r graph3}
 by_time <- group_by(FIR_2015_data, Time) 
 summ_times <- summarise(by_time, freq = n())
@@ -105,7 +105,7 @@ This is a surprising pattern since one would assume that most crimes take place 
 
 
 
-## Distribution of crime incidences across all the week days:
+### Distribution of crime incidences across all the week days:
 ```{r graph4, fig.width=10, fig.height=8}
 # change Date type and create a new variable called "Month"
 FIR_2015_data$Date <- dmy(FIR_2015_data$Date)
@@ -131,7 +131,7 @@ While we know that most crimes take place early and late afternoon, one can wond
 
 Moreover, it could also be seen that during such days, the incidences of crime tend to be higher in the afternoon than the incidences of crime in other week days.
 
-## Distribution across the week days by neighborhoods:
+### Distribution crime incidences across the week days by neighborhoods:
 ```{r graph5, fig.width=10, fig.height=8}
 theme_set(theme_classic())
 
