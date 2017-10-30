@@ -5,7 +5,7 @@ library("lubridate")
 library("viridis")
 library("extrafont")
 library("rmarkdown")
-library(ggthemes)
+library("ggthemes")
 
 font_import() # import all your fonts
 fonts() #get a list of fonts
