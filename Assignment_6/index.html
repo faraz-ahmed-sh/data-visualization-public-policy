@@ -10,5 +10,105 @@
 
 <body>
 	<h2>Assignment 6: Bar Chart in D3.js</h2>
+	<div class = "container">
+
+		<div id = "chart"></div>
+
+	</div>
+
+	<script>
+		var margin = 50;
+		var width = 600;
+		var height = 450;
+
+		//load the data
+
+		d3.json("dengue_age.json", function(error, data) {
+
+			data.forEach( function(d) {
+				// unary+ operator to read numerical data correctly.
+				d["01-10yrs."] = +d["01-10yrs."]
+				d["11-20yrs."] = +d["11-20yrs."]
+				d["21-30yrs."] = +d["21-30yrs."]
+				d["31-40yrs."] = +d["31-40yrs."]
+				d["41-50yrs."] = +d["41-50yrs."]
+				d["51-60yrs."] = +d["51-60yrs."]
+				d["61-70yrs."] = +d["61-70yrs."]
+				d["71-80yrs."] = +d["71-80yrs."]
+				d["81-90yrs."] = +d["81-90yrs."]
+				d["91-100yrs."] = +d["91-100yrs."]
+				d["Unknown"] = +d["Unknown"]
+				d["Total"] = +d["Total"]
+			});
+
+			if (error) throw error;
+
+			dataset = data;
+
+			makeBarChart(data);
+			console.log(dataset[0]);
+			
+		});
+
+		function makeBarChart(dataset) {
+
+			var keys = dataset.columns;
+			console.log(keys)
+
+			//add the SVG element
+
+			var svg = d3.select("#chart")
+			.append('svg') 
+			.attr('width', width + margin*2)
+			.attr('height', height + margin*2);
+
+			// set the ranges of X and Y axes
+
+			var xScale = d3.scaleBand()
+			.domain(dataset.map(function (d) { return d["Towns name"]; }))
+			.rangeRound([0, width])
+			.paddingInner(0.05)
+    		.align(0.1);
+			//range is giving me the error. why?
+
+			var yScale = d3.scaleLinear()
+			.domain([d3.min(dataset, function (d) { return d["91-100yrs."]; }), 
+				d3.max(dataset, function (d) { return d["21-30yrs."];	})])
+			.range([height, 0])
+			.nice();
+
+			// define the axes
+
+			svg.append('g')
+			.attr('transform', 'translate(' + margin + ',' + (height + margin) + ')');
+			//.call(d3.axisBottom(xScale));
+
+			// add the data to the bar	chart		
+
+			var g = svg.append('g')
+			.attr('transform', 'translate(' + margin + ',' + margin + ')');
+			//translate x and y where both of them are 25 right now
+
+			g.append("g")
+				.selectAll("g")
+				.data(dataset) // institutes a loop, 
+				.enter() // important when the data viz is moving/changing
+				.append("g")
+				.attr("class", "dot") // now you're making sure that the class that you're choosing is dot
+				.selectAll("rect")
+				.data(dataset);
+
+			svg.append('g')
+			.attr('transform', 'translate(' + margin + ',' + (height + margin) + ')')
+			.call(d3.axisBottom(xScale));
+
+			svg.append('g')
+				.attr('transform', 'translate(' + margin + ',' + margin + ')')
+			.call(d3.axisLeft(yScale));
+
+		};
+
+		
+	</script>
 </body>
 </html>
