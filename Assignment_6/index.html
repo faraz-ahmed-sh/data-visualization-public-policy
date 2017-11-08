@@ -21,7 +21,9 @@
 </head>
 
 <body>
-	<h2>Assignment 6: Bar Chart in D3.js</h2>
+	<h2>Young adults are most vulnerable to dengue in Lahore</h2>
+	<h3>*Based on the survey results conducted in 2011-2012</h3>
+
 	<div class = "container">
 
 		<div id = "chart"></div>
@@ -30,8 +32,9 @@
 
 	<script>
 		var margin = 50; //define top, left, right and bottom margins in a dict
-		var width = 600;
+		var width = 720;
 		var height = 450;
+
 		var legendRectSize = 18;                                  // NEW
         var legendSpacing = 4;                                    // NEW
 
@@ -45,7 +48,6 @@
 			function filterCriteria(d) {
 			    return (d["Towns name"] != "Total no.") && (d["Towns name"] != "Prevelance(%)");
 			}
-
 
 			data.forEach( function(d) {
 				// unary+ operator to read numerical data correctly.
@@ -74,6 +76,9 @@
 
 		function makeBarChart(dataset) {
 
+			//var sort_ = dataset.sort(function(a, b) { return b["Total no."] - a["Total no."]; });
+			//console.log(sort_)
+
 			//create a series of stacks/keys for the stacked bar chart
 
 			var series = d3.stack()
@@ -82,9 +87,13 @@
 		    (dataset); //source: Mike Bostock: https://bl.ocks.org/mbostock/b5935342c6d21928111928401e2c8608
 
 		    console.log(series)
-		    //console.log(dataset["01-10yrs."]);
-
 			//add the SVG element
+
+			var groups = svg.selectAll("g.cost")
+		  .data(dataset)
+		  .enter().append("g")
+		  .attr("class", "cost")
+		  .style("fill", function(d, i) { return colors[i]; });
 
 			var svg = d3.select("#chart")
 			.append('svg') 
@@ -96,7 +105,7 @@
 			var xScale = d3.scaleBand()
 			.domain(dataset.map(function (d) { return d["Towns name"]; }))
 			.rangeRound([0, width])
-			.paddingInner(0.1)
+			.paddingInner(0.4)
     		.align(0.1);
 
 			var yScale = d3.scaleLinear()
@@ -108,17 +117,23 @@
 			.nice();
 
 			var zScale = d3.scaleOrdinal(d3.schemeCategory20); //source: Mike Bostock: https://bl.ocks.org/mbostock/b5935342c6d21928111928401e2c8608
+			// change the colors
 
 			var g = svg.append('g')
-			.attr('transform', 'translate(' + margin + ',' + margin + ')');
+			.attr('transform', 'translate(' + margin + ',' + (margin+10) + ')');
 			//translate x and y where both of them are 25 right now
 			
 			var xAxis = svg.append('g')
-			.attr('transform', 'translate(' + margin + ',' + margin + ')')
-			.call(d3.axisTop(xScale));
+			.attr('transform', 'translate(' + margin + ',' + (margin+10) + ')')
+			.call(d3.axisTop(xScale))
+			.selectAll("text")
+		      .style("text-anchor", "end")
+		      .attr("dx", "59")
+		      .attr("dy", "-.40em")
+		      .attr("transform", "rotate(-20)" );
 
 			var yAxis = svg.append('g')
-				.attr('transform', 'translate(' + margin + ',' + (margin) + ')')
+				.attr('transform', 'translate(' + margin + ',' + (margin+10) + ')')
 			.call(d3.axisLeft(yScale));
 
 			// add the data to the bar	chart
@@ -130,12 +145,19 @@
 			  .selectAll("rect")
 			  .data(function(d) { return d; })
 			  .enter().append("rect")
-				.attr("class", "barchart") // now you're making sure that the class that you're choosing is barchart
-				//.attr("fill", function(d) { return zScale(d.key); }) // source:
+				.attr("class", "barchart") // now you're making sure that the class that you're choosing is barchartsource:
 				.attr("x", function(d) { return xScale(d.data["Towns name"]); })
-				.attr("width", "40")
+				.attr("width", "45")
       			.attr("y", function(d) { return yScale(d[0]); })
-      			.attr("height", function(d) { return -(yScale(d[0]) - yScale(d[1])); });
+      			.attr("height", function(d) { return -(yScale(d[0]) - yScale(d[1])); })
+      			.on("mouseover", function() { tooltip.style("display", null); })
+			  .on("mouseout", function() { tooltip.style("display", "none"); })
+			  .on("mousemove", function(d) {
+			  	//console.log()
+			    var xPosition = d3.mouse(this)[0] + margin;
+			    var yPosition = d3.mouse(this)[1] + (margin-10);
+			    tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+			    tooltip.select("text").text(d.yScale) });
 
       		// source: 
 
@@ -149,7 +171,7 @@
 
 
 			var dataL = 5;
-			var offset = 55;
+			var offset = 60;
 
 			var legend = svg.selectAll('.legend')                     // NEW
 	          .data(zScale.domain())                                   // NEW
@@ -167,26 +189,47 @@
 	        legend.append('rect')                                     // NEW
 	          .attr('width', 10)                          // NEW
 	          .attr('height', 10)
-	          .attr("x", 10)
+	          .attr("x", 50)
 	            .attr("y", 520)                         // NEW
 	          .style('fill', zScale)                                   // NEW
 	          .style('stroke', zScale);                                // NEW
 
 	        legend.append('text')                                     // NEW
-	          .attr('x', 23)              // NEW
+	          .attr('x', 65)              // NEW
 	          .attr('y', 530)              // NEW
 	          .text(function(d) { return d; });                       // NEW
 
 	         svg.append("text")             
-			    .attr("transform", "translate(" + (width/1.7) + " ," + 15 + ")")
+			    .attr("transform", "translate(" + (width/1.7) + " ," + (15) + ")")
 			    .style("text-anchor", "middle")
 			    .text("Neighborhoods");
 
 			svg.append("text")
 			    .attr("transform", "rotate(-90)")
-			    .attr("y", margin/3.7)
-			    .attr("x",0 - (height + margin*6)/2)
+			    .attr("y", margin/5)
+			    .attr("x",0 - (height + margin*7)/2)
 			    .text("Number of people with dengue fever");
+
+			 // doing the tooltip. source: 
+
+			// Prep the tooltip bits, initial display is hidden
+				var tooltip = svg.append("g")
+				.attr("class", "tooltip")
+				.style("display", "none");
+
+				tooltip.append("rect")
+				.attr("width", 30)
+				.attr("height", 20)
+				.attr("fill", "white")
+				.style("opacity", 0.5);
+
+				tooltip.append("text")
+				.attr("x", 15)
+				.attr("dy", "1.2em")
+				.style("text-anchor", "middle")
+				.attr("font-size", "12px")
+				.attr("font-weight", "bold");
+
 
 		};
 
