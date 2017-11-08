@@ -16,8 +16,6 @@
 	    width: 10%;
 	    padding-left: 0;
 	    padding-right: 50;
-
-
 	</style>
 
 </head>
@@ -178,6 +176,17 @@
 	          .attr('x', 20)              // NEW
 	          .attr('y', 10)              // NEW
 	          .text(function(d) { return d; });                       // NEW
+
+	         svg.append("text")             
+			    .attr("transform", "translate(" + (width/2) + " ," + 10 + ")")
+			    .style("text-anchor", "middle")
+			    .text("Neighborhoods");
+
+			svg.append("text")
+			    .attr("transform", "rotate(-90)")
+			    .attr("y", margin/3.8)
+			    .attr("x",0 - (height + margin*7)/2)
+			    .text("Number of people with dengue fever");
 
 		};
 
