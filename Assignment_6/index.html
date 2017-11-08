@@ -107,7 +107,7 @@
 			.rangeRound([0, height])
 			.nice();
 
-			var zScale = d3.scaleOrdinal(d3.schemeCategory10); //source: Mike Bostock: https://bl.ocks.org/mbostock/b5935342c6d21928111928401e2c8608
+			var zScale = d3.scaleOrdinal(d3.schemeCategory20); //source: Mike Bostock: https://bl.ocks.org/mbostock/b5935342c6d21928111928401e2c8608
 
 			var g = svg.append('g')
 			.attr('transform', 'translate(' + margin + ',' + margin + ')');
@@ -148,8 +148,8 @@
 			}
 
 
-			var dataL = 0;
-			var offset = 75;
+			var dataL = 5;
+			var offset = 55;
 
 			var legend = svg.selectAll('.legend')                     // NEW
 	          .data(zScale.domain())                                   // NEW
@@ -165,27 +165,27 @@
 	                                                               // NEW
 
 	        legend.append('rect')                                     // NEW
-	          .attr('width', legendRectSize)                          // NEW
-	          .attr('height', legendRectSize)
-	          .attr("x", 0)
-	            .attr("y", 0)                         // NEW
+	          .attr('width', 10)                          // NEW
+	          .attr('height', 10)
+	          .attr("x", 10)
+	            .attr("y", 520)                         // NEW
 	          .style('fill', zScale)                                   // NEW
 	          .style('stroke', zScale);                                // NEW
 
 	        legend.append('text')                                     // NEW
-	          .attr('x', 20)              // NEW
-	          .attr('y', 10)              // NEW
+	          .attr('x', 23)              // NEW
+	          .attr('y', 530)              // NEW
 	          .text(function(d) { return d; });                       // NEW
 
 	         svg.append("text")             
-			    .attr("transform", "translate(" + (width/2) + " ," + 10 + ")")
+			    .attr("transform", "translate(" + (width/1.7) + " ," + 15 + ")")
 			    .style("text-anchor", "middle")
 			    .text("Neighborhoods");
 
 			svg.append("text")
 			    .attr("transform", "rotate(-90)")
-			    .attr("y", margin/3.8)
-			    .attr("x",0 - (height + margin*7)/2)
+			    .attr("y", margin/3.7)
+			    .attr("x",0 - (height + margin*6)/2)
 			    .text("Number of people with dengue fever");
 
 		};
