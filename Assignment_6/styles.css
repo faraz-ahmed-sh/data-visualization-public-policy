@@ -9,12 +9,19 @@
 	    padding-right: 50;
 	}
 
-	h3 {
-		font-weight: none;
-		  font-size: 17px;
-	}
+h2 {
+	font-family: 'Raleway', sans-serif;
+}
 
-	p1 {
-		font-weight: bold;
-		  font-size: 15px;
-	}
+h3 {
+	font-weight: none;
+	font-size: 17px;
+	font-family: 'Raleway', sans-serif;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+p1 {
+	font-weight: bold;
+	  font-size: 100px;
+}

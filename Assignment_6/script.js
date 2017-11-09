@@ -67,10 +67,10 @@ function makeBarChart(dataset) {
 		.domain([d3.min(series, stackMin), d3.max(series, stackMax)])
 		.rangeRound([0, height]);
 
-	//var zScale = d3.scaleOrdinal(d3.schemeCategory20);
+	//var zScale = d3.scaleOrdinal(d3.schemeCategory10);
 
 	var zScale = d3.scaleOrdinal()
-	.range(["#12719e", "#1696d2", "#e88e2d", "#46abdb", "#a2d4ec", "#73bfe2", "#a2d4ec"]);
+	.range(["#12719e", "#1696d2", "#636363", "#46abdb", "#a2d4ec", "#73bfe2", "#a2d4ec"]);
 
 	var g = svg.append('g')
 	.attr('transform', 'translate(' + margin + ',' + (margin+10) + ')');
@@ -88,7 +88,7 @@ function makeBarChart(dataset) {
 		.call(d3.axisLeft(yScale));
 
 	 //x and y axis labels              
-     svg.append("text")             
+     svg.append("text")    
 	    .attr("transform", "translate(" + (margin*8) + " ," + margin/4 + ")")
 	    .style("text-anchor", "middle")
 	    .attr("font-weight", "bold")
