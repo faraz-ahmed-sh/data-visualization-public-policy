@@ -12,12 +12,9 @@ library("jsonlite")
 dengue_age <- read_csv("Data/age_and_dengue_fever.csv") 
 dengue_age
 
-
 # convert it into a json
-
-library(jsonlite)
 dengue_age_json <- toJSON(dengue_age)
-dengue_age_json
+write(dengue_age_json, "dengue_age.json")
 
 
 
