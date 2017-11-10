@@ -93,7 +93,7 @@ function makeBarChart(dataset) {
 
 	 //add x and y axis labels              
      svg.append("text")    
-	    .attr("transform", "translate(" + (width/2) + " ," + (margin+30) + ")")
+	    .attr("transform", "translate(" + (width/1.8) + " ," + (margin+30) + ")")
 	    .style("text-anchor", "middle")
 	    .attr("font-weight", "bold")
 	    .text("Neighborhood");
