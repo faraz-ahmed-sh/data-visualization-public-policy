@@ -1,0 +1,15 @@
+.legend {
+	    float:bottom;
+	    margin-right: 10em;
+	    border-bottom-width: 15px;
+	    border-top-style: solid;
+	    font-size: .75em;
+	    width: 10%;
+	    padding-left: 0;
+	    padding-right: 50;
+	}
+
+p1 {
+	font-weight: bold;
+	font-size: 15px;
+}
