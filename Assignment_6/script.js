@@ -130,7 +130,6 @@ function makeBarChart(dataset) {
 		.data(function(d) { return d; })
 		.enter().append("rect")
 		
-		//stroke-width:5;fill-opacity:0.1;stroke-opacity:0.9")
 		.attr("class", "barchart") // now you're making sure that the class that you're choosing is barchartsource:
 		.attr("x", function(d) { return xScale(d.data["Towns name"]); })
 		.attr("width", "45")
@@ -146,7 +145,7 @@ function makeBarChart(dataset) {
 		    tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
 		    tooltip.select("text").text(d[1]-d[0])});
 
-	//define min and max values for the series of stacks ("1-10 yrs.", "11-20 yrs." etc.)
+	//define min and max values for the series of stacks ("1-10", "11-20." etc.)
 	function stackMin(serie) {
 	  return d3.min(serie, function(d) { return d[0]; });
 	}
