@@ -28,8 +28,8 @@ class(lahore_crime_14$Time)
 
 datetime <- as.POSIXct(paste(lahore_crime_14$Date, lahore_crime_14$Time, format="%Y-%m-%d %H:%M:%S"))
 datetime
-lahore_crime_14$datetime <- as.numeric(datetime)
-class(lahore_crime_14$datetime)
+lahore_crime_14$datetime <- strptime(datetime)
+lahore_crime_14$datetime
 # convert it into a json
 lahore_crime_14_json <- toJSON(lahore_crime_14, force=TRUE)
 write(lahore_crime_14_json, "lahore_crime_14.json")

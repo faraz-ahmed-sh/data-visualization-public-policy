@@ -84,22 +84,23 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
 		.attr('width', width + margin.right + margin.left)
 		.attr('height', height + margin.top + margin.bottom);
 
-  	var xScale = d3.scaleLinear().range([0, width]);
+  	var xScale = d3.scaleLinear().range([0, width - margin.bottom - margin.top]);
 	var yScale = d3.scaleBand().range([height, 0]);
 
 	var g = svg.append("g")
 			.attr("transform", "translate(" + margin.left*1.5 + "," + margin.top + ")");
 
-		xScale.domain([0, d3.max(neighborhoodCrimeCount, function(d) { return d.value; })]);
+		xScale.domain([0, (d3.max(neighborhoodCrimeCount, function(d) { return d.value; }))]);
 	    yScale.domain(neighborhoodCrimeCount.map(function(d) { return d.key; })).padding(0.1);
 
 	    g.append("g")
 	        .attr("class", "x axis")
-	       	.attr("transform", "translate(0," + height + ")")
+	       	.attr("transform", "translate(0," + height+10 + ")")
 	      	.call(d3.axisBottom(xScale).ticks(7));
 
 	    g.append("g")
 	        .attr("class", "y axis")
+	        //.attr("transform", "translate(0," + height*2 + ")")
 	        .call(d3.axisLeft(yScale));
 
 	    g.selectAll(".bar")
@@ -111,6 +112,45 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
 	        .attr("y", function(d) { return yScale(d.key); })
 	        .attr("width", function(d) { return xScale(d.value); })
 
+	 //make a map of Pakistan's districts
+    
+    var svg = d3.select("#pakistanMap")
+		.append('svg') 
+		.attr('width', width + margin.right + margin.left)
+		.attr('height', height + margin.top + margin.bottom);
+
+	var g = svg.append("g")
+    
+    var projection = d3.geoMercator()
+      .scale(width*2.2)
+     //.scale(600)
+      .translate([-1400, height*2.5])
+
+    var path = d3.geoPath()
+      .projection(projection);
+    
+    //var url = "http://enjalot.github.io/wwsd/data/world/world-110m.geojson";
+    d3.json("pakistan_district.json", function(err, pak) {
+    	console.log(pak.objects.pakistan_district)
+    	
+
+      //svg.append("path")
+       // .attr("d", path(topojson))
+      //.attr("class", "provinces")
+      //.datum(topojson.feature(topojson, geojson.properties.province))
+      //.attr("d", path);
+      svg.append("g")
+      .attr("class", "districts")
+    .selectAll("path")
+      .data(topojson.feature(pak, pak.objects.pakistan_district).features)
+    .enter().append("path")
+      .attr("d", path)
+      .style("fill", "white")
+      .style("stroke", "black");
+    })
+
+    
+
   	//Make charts on which cross filter will be applied
 	var charts = [
 	
@@ -119,26 +159,29 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
         .group(crimeTypeGroup)
       .x(d3.scaleBand()
         .domain(dataset.map(function (d) { return d["Crime Type"]; }))
-        .rangeRound([10, 10 * 120]))
-      	.margin({top: 10, right: 13, bottom: 30, left: 10 })
-      	.filter(["robbery"]),
+        .rangeRound([10, 9 * 80]))
+      	
+      	.filter(["robbery"])
+      	.xTickRot(-95),
 
       barChart()
         .dimension(date)
         .group(dateGroup)
-        .round(d3.timeDay.round)
         .x(d3.scaleTime()
-          .domain([new Date(2014, 0, 1), new Date(2014, 12, 31)])
-          .rangeRound([0, 10 *100]))
-        .filter([new Date(2014, 1, 1), new Date(2014, 2, 1)]),
+          .domain([new Date(2014, 0, 1), new Date(2014, 1, 31)])
+          .rangeRound([10, 10 *70]))
+        .filter([new Date(2014, 1, 1), new Date(2014, 2, 1)])
+        .xTickRot(-95),
 
     barChart()
         .dimension(hourDim)
         .group(hourGroup)
+        //.margin({top: 50, right: 50, bottom: 50, left: 50 })
       .x(d3.scaleLinear()
         .domain([0, 24])
-        .rangeRound([0, 10 * 40]))
+        .rangeRound([10, 10 * 40]))
       	.filter(["1"])
+      	.xTickRot(-95)
   ];
   //console.log(charts)
 
@@ -185,8 +228,6 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
 
   function crimeList(div) {
     var crimeByDate = nestByDate.entries(date.top(40));
-
-    //console.log(crimeByDate)
    
     div.each(function() {
       var date = d3.select(this).selectAll(".date")
@@ -214,7 +255,7 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
           .attr("class", "time")
           .text(function(d) {return formatTime(d.date)});
 
-      flightEnter.append("div")
+      crimeEnter.append("div")
           .attr("class", "neighborhood")
           .text(function(d) {return d["Neighborhood"]});
 
@@ -246,7 +287,8 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
     let group;
     let round;
     let gBrush;
-    let x_tick_rot;
+    var xTickRot;
+    
 
     function chart(div) {
       const width = x.range()[1];
@@ -266,12 +308,12 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
           div.select('.title').append('a')
             .attr('href', `javascript:reset(${id})`)
             .attr('class', 'reset')
-            .text('reset')
+            .text(' reset')
             .style('display', 'none');
 
           g = div.append('svg')
             .attr('width', width + margin.left + margin.right)
-            .attr('height', height + margin.top + margin.bottom)
+            .attr('height', height*1.5 + margin.top + margin.bottom)
             .append('g')
               .attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -295,9 +337,10 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
             .attr('transform', `translate(0,${height})`)
             .call(xaxis)
             .selectAll("text")
-            	//.attr("dx", "15")
-            //.attr("dy", "-.5em")
-            	.attr("transform", "rotate(-90)" );
+            	.attr("dx", "-45")
+            	.attr("dy", "-10")
+            	.attr("transform", "rotate(-90)");
+            	//.attr("transform", "rotate(-90)" );
 
           // Initialize the brush component with pretty resize handles.
           gBrush = g.append('g')
@@ -453,6 +496,12 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
     chart.group = function (_) {
       if (!arguments.length) return group;
       group = _;
+      return chart;
+    };
+    
+    chart.xTickRot = function (_) {
+      if (!arguments.length) return xTickRot;
+      xTickRot = _;
       return chart;
     };
 
