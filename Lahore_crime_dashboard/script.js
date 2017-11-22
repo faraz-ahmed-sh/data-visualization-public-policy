@@ -5,238 +5,425 @@ var width = 720;
 var height = 450;
 
 //load the data
+var parseDate = d3.timeParse("%Y-%m-%d");
+var parseTime = d3.timeFormat("%H:%M:%S");
+var parseDateTime = d3.timeParse("%Y,%m,%d,%H,%M");
+
 d3.json("Data/lahore_crime_14.json", function(error, data) {
 
 	if (error) throw error;
 
-	data.forEach( function(d) {
+	
+	data.forEach( function(d, i) {
 		// unary+ operator to read numerical data correctly.
-		//d["01-10"] = +d["01-10yrs."] || 0
-		//d["Time"] = d3.dateFormat.parse(d["Time"]) || 0
+		//d["Time"] = +d["Time"] || 0
+		//console.log(d["Time"])
+		//console.log(d["datetime"])
+		//console.log(d["karo"])
+		//d["datetime"] = d["datetime"]
+		//console.log(d["datetime"])
+		//d["datetime"] = +["datetime"]
+		d.index = i
+
+		d["Time"] = parseTime(d["Time"]) || 0
+		d["Time"] = d3.timeParse("%H:%M:%S")(d["Time"])
 		d["year"] = +d["year"] || 0
-		d["Month"] = +d["Month"] || 0
+		//d["datetime"] = parseDate(d["datetime"])
+		d["Date"] = parseDate(d["Date"]) || 0
+		//d["Month"] = d["Month"] || 0
+		//console.log(d3.timeYear(d["Date"]))
+		//d["Date"] = parseDate(d["Date"]) || 0
 		d["hour"] = +d["hour"] || 0
+		d["datetime"] = parseDateTime(d["Date"].getFullYear(), d["Date"].getMonth(), d["Date"].getDay(), 
+								d["Time"].getHours(), d["Time"].getMinutes()) || 0
+
+		//console.log(parseDateTime(d["Date"].getFullYear(), d["Date"].getMonth(), d["Date"].getDay(), 
+		//						d["Time"].getHours(), d["Time"].getMinutes()))
+		//console.log(d["Date"])
 	});
 
+
 	dataset = data;
+	console.log(dataset)
 	//makeBarChart(dataset);
-	console.log(dataset);
+	//console.log(dataset["hour"]);
+
+	// A nest operator, for grouping the flight list.
+  	var nestByDate = d3.nest()
+      .key(function(d) {return d3.timeDay(d.Date)})
+
+    //console.log(nestByMonth)
 	
-
-
 	//Create a Crossfilter instance
 	var ndx = crossfilter(dataset);
 	//console.log(ndx)
 
 	//Define Dimensions
 	var crimeTypeDim = ndx.dimension(function(d) { return d["Crime Type"]; });
-	var monthDim = ndx.dimension(function(d) { return d["Month"]; });
-	var hourDim = ndx.dimension(function(d) { return d["hour"]; });
+	var date = ndx.dimension(function(d) {return d.Date});
+	var hourDim = ndx.dimension(function(d) {return d.Date.getHours() + d.Date.getMinutes() / 60});
 	var allDim = ndx.dimension(function(d) {return d;});
 
 
 	//Group Data
 	var crimeTypeGroup = crimeTypeDim.group();
-	var monthGroup = monthDim.group();
+	//console.log(crimeTypeGroup)
+	var dateGroup = date.group();
 	var hourGroup = hourDim.group();
 	var all = ndx.groupAll();
 
-
+	//console.log(dataset.map(function (d) { return d["Month"]; }))
 	//Make charts on which cross filter will be applied
 	var charts = [
-    makeBarChart()
-        .dimension(crimeTypeDim)
+	
+    barChart()
+    	.dimension(crimeTypeDim)
         .group(crimeTypeGroup)
       .x(d3.scaleBand()
-        .domain([0, 24])
-        .rangeRound([0, 10 * 24])),
-    makeBarChart()
-        .dimension(monthDim)
-        .group(monthGroup)
-      .x(d3.scaleBand()
-        .domain([-60, 150])
-        .rangeRound([0, 10 * 21])),
-    makeBarChart()
+        .domain(dataset.map(function (d) { return d["Crime Type"]; }))
+        .rangeRound([10, 10 * 120]))
+      	.margin({top: 10, right: 13, bottom: 30, left: 10 })
+      	.filter(["narcotics"]),
+
+      barChart()
+        .dimension(date)
+        .group(dateGroup)
+        .round(d3.timeDay.round)
+        .x(d3.scaleTime()
+          .domain([new Date(2014, 0, 1), new Date(2014, 12, 31)])
+          .rangeRound([0, 10 *100]))
+        .filter([new Date(2014, 1, 1), new Date(2014, 2, 1)]),
+
+    barChart()
         .dimension(hourDim)
         .group(hourGroup)
       .x(d3.scaleLinear()
-        .domain([0, 2000])
+        .domain([0, 24])
         .rangeRound([0, 10 * 40]))
+      	.filter(["1"])
   ];
+  //console.log(charts)
 
-  });
+  // Given our array of charts, which we assume are in the same order as the
+  // .chart elements in the DOM, bind the charts to the DOM and render them.
+  // We also listen to the chart's brush events to update the display.
+  var chart = d3.selectAll(".chart")
+      .data(charts)
+
+  // Render the initial lists.
+  var list = d3.selectAll(".list")
+      .data([crimeList]);
+  //console.log([crimeList])
+
+  // Render the total.
+  d3.selectAll("#total")
+      .text(ndx.size());
+
+  renderAll();
+
+  // Renders the specified chart or list.
+  function render(method) {
+    d3.select(this).call(method);
+  }
+
+  // Whenever the brush moves, re-rendering everything.
+  function renderAll() {
+    chart.each(render);
+    list.each(render);
+    d3.select("#active").text(all.value());
+  }
+
+
+  window.filter = function(filters) {
+    filters.forEach(function(d, i) {charts[i].filter(d)});
+    renderAll();
+  };
+
+  window.reset = function(i) {
+    charts[i].filter(null);
+    renderAll();
+  };
+
+
+  function crimeList(div) {
+    var crimeByDate = nestByDate.entries(date.top(40));
+
+    console.log(crimeByDate)
+   
+    div.each(function() {
+      var date = d3.select(this).selectAll(".date")
+          .data(crimeByDate, function(d) {return d.key});
+
+    date.exit().remove();
+
+      date.enter().append("div")
+          .attr("class", "date")
+        .append("div")
+          .attr("class", "day")
+          .text(function(d) {return formatDate(d.values[0].date)})
+        .merge(date);
+
+
+      var crime = date.order().selectAll(".crime")
+          .data(function(d) {return d.values}, function(d) {return d.index});
+          
+          crime.exit().remove();
+
+      var crimeEnter = crime.enter().append("div")
+          .attr("class", "flight");
+
+      crimeEnter.append("div")
+          .attr("class", "time")
+          .text(function(d) {return formatTime(d.date)});
+
+      flightEnter.append("div")
+          .attr("class", "neighborhood")
+          .text(function(d) {return d["Neighborhood"]});
+
+      crimeEnter.append("div")
+          .attr("class", "crimeType")
+          .text(function(d) {return d["Crime Type"]});
+
+      crimeEnter.merge(crime);
+
+      crime.order();
+    });
+  }
 
 	// a bar chart function that uses the same properties for each of the chart
 	// on which a cross filter is applied
 	// source: https://github.com/square/crossfilter/blob/gh-pages/index.html
-	function makeBarChart() {
-    if (!makeBarChart.id) makeBarChart.id = 0;
-    var margin = {top: 10, right: 10, bottom: 20, left: 10},
-        x,
-        y = d3.scaleLinear().range([100, 0]),
-        id = makeBarChart.id++,
-        axis = d3.axisTop(),
-        brush = d3.brush(),
-        brushDirty,
-        dimension,
-        group,
-        round;
+	function barChart() {
+    if (!barChart.id) barChart.id = 0;
+
+    let margin = { top: 10, right: 13, bottom: 20, left: 10 };
+    let x;
+    let y = d3.scaleLinear().range([200, 0]);
+    const id = barChart.id++;
+    const axis = d3.axisBottom();
+    const brush = d3.brushX();
+    let brushDirty;
+    let dimension;
+    let group;
+    let round;
+    let gBrush;
+    let x_tick_rot;
+
     function chart(div) {
-      var width = x.range()[1],
-          height = y.range()[0];
+      const width = x.range()[1];
+      const height = y.range()[0];
+
+      brush.extent([[0, 0], [width, height]]);
+
       y.domain([0, group.top(1)[0].value]);
-      div.each(function() {
-        var svg = d3.select(this),
-            g = svg.select("g");
+
+      div.each(function () {
+        const div = d3.select(this);
+        let g = div.select('g');
+
         // Create the skeletal chart.
         if (g.empty()) {
-          svg.select(".title").append("a")
-              .attr("href", "javascript:reset(" + id + ")")
-              .attr("class", "reset")
-              .text("reset")
-              .style("display", "none");
-          g = svg.append("svg")
-              .attr("width", width + margin.left + margin.right)
-              .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-              .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-          g.append("clipPath")
-              .attr("id", "clip-" + id)
-            .append("rect")
-              .attr("width", width)
-              .attr("height", height);
-          g.selectAll(".bar")
-              .data(["background", "foreground"])
-            .enter().append("path")
-              .attr("class", function(d) { return d + " bar"; })
+          div.select('.title').append('a')
+            .attr('href', `javascript:reset(${id})`)
+            .attr('class', 'reset')
+            .text('reset')
+            .style('display', 'none');
+
+          g = div.append('svg')
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', height + margin.top + margin.bottom)
+            .append('g')
+              .attr('transform', `translate(${margin.left},${margin.top})`);
+
+          g.append('clipPath')
+            .attr('id', `clip-${id}`)
+            .append('rect')
+              .attr('width', width)
+              .attr('height', height);
+
+          g.selectAll('.bar')
+            .data(['background', 'foreground'])
+            .enter().append('path')
+              .attr('class', d => `${d} bar`)
               .datum(group.all());
-          g.selectAll(".foreground.bar")
-              .attr("clip-path", "url(#clip-" + id + ")");
-          g.append("g")
-              .attr("class", "axis")
-              .attr("transform", "translate(0," + height + ")")
-              .call(axis);
+
+          g.selectAll('.foreground.bar')
+            .attr('clip-path', `url(#clip-${id})`);
+
+          g.append('g')
+            .attr('class', 'axis')
+            .attr('transform', `translate(0,${height})`)
+            .call(axis)
+            .selectAll("text")
+            	//.attr("dx", "15")
+            //.attr("dy", "-.5em")
+            	.attr("transform", "rotate(-90)" );
+
           // Initialize the brush component with pretty resize handles.
-          var gBrush = g.append("g").attr("class", "brush").call(brush);
-          gBrush.selectAll("rect").attr("height", height);
-          gBrush.selectAll(".resize").append("path").attr("d", resizePath);
+          gBrush = g.append('g')
+            .attr('class', 'brush')
+            .call(brush);
+
+          gBrush.selectAll('.handle--custom')
+            .data([{ type: 'w' }, { type: 'e' }])
+            .enter().append('path')
+              .attr('class', 'brush-handle')
+              .attr('cursor', 'ew-resize')
+              .attr('d', resizePath)
+              .style('display', 'none');
         }
+
         // Only redraw the brush if set externally.
-        if (brushDirty) {
+        if (brushDirty !== false) {
+          const filterVal = brushDirty;
           brushDirty = false;
-          g.selectAll(".brush").call(brush);
-          svg.select(".title a").style("display", brush.empty() ? "none" : null);
-          if (brush.empty()) {
-            g.selectAll("#clip-" + id + " rect")
-                .attr("x", 0)
-                .attr("width", width);
+
+          div.select('.title a').style('display', d3.brushSelection(div) ? null : 'none');
+
+          if (!filterVal) {
+            g.call(brush);
+
+            g.selectAll(`#clip-${id} rect`)
+              .attr('x', 0)
+              .attr('width', width);
+
+            g.selectAll('.brush-handle').style('display', 'none');
+            renderAll();
           } else {
-            var extent = brush.extent();
-            g.selectAll("#clip-" + id + " rect")
-                .attr("x", x(extent[0]))
-                .attr("width", x(extent[1]) - x(extent[0]));
+            const range = filterVal.map(x);
+            brush.move(gBrush, range);
           }
         }
-        g.selectAll(".bar").attr("d", barPath);
+
+        g.selectAll('.bar').attr('d', barPath);
       });
+
       function barPath(groups) {
-        var path = [],
-            i = -1,
-            n = groups.length,
-            d;
+        const path = [];
+        let i = -1;
+        const n = groups.length;
+        let d;
         while (++i < n) {
           d = groups[i];
-          path.push("M", x(d.key), ",", height, "V", y(d.value), "h9V", height);
+          path.push('M', x(d.key), ',', height, 'V', y(d.value), 'h9V', height);
         }
-        return path.join("");
+        return path.join('');
       }
+
       function resizePath(d) {
-        var e = +(d == "e"),
-            x = e ? 1 : -1,
-            y = height / 3;
-        return "M" + (.5 * x) + "," + y
-            + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
-            + "V" + (2 * y - 6)
-            + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
-            + "Z"
-            + "M" + (2.5 * x) + "," + (y + 8)
-            + "V" + (2 * y - 8)
-            + "M" + (4.5 * x) + "," + (y + 8)
-            + "V" + (2 * y - 8);
+        const e = +(d.type === 'e');
+        const x = e ? 1 : -1;
+        const y = height / 3;
+        return `M${0.5 * x},${y}A6,6 0 0 ${e} ${6.5 * x},${y + 6}V${2 * y - 6}A6,6 0 0 ${e} ${0.5 * x},${2 * y}ZM${2.5 * x},${y + 8}V${2 * y - 8}M${4.5 * x},${y + 8}V${2 * y - 8}`;
       }
     }
-    brush.on("brush.chart", function() {
-      var svg = d3.select(this.parentNode.parentNode.parentNode);
-      svg.select(".title a").style("display", null);
+
+    brush.on('start.chart', function () {
+      const div = d3.select(this.parentNode.parentNode.parentNode);
+      div.select('.title a').style('display', null);
     });
-    brush.on("brush.chart", function() {
-      var g = d3.select(this.parentNode),
-          extent = brush.extent();
-      if (round) g.select(".brush")
-          .call(brush.extent(extent = extent.map(round)))
-        .selectAll(".resize")
-          .style("display", null);
-      g.select("#clip-" + id + " rect")
-          .attr("x", x(extent[0]))
-          .attr("width", x(extent[1]) - x(extent[0]));
-      dimension.filterRange(extent);
+
+    brush.on('brush.chart', function () {
+      const g = d3.select(this.parentNode);
+      const brushRange = d3.event.selection || d3.brushSelection(this); // attempt to read brush range
+      const xRange = x && x.range(); // attempt to read range from x scale
+      let activeRange = brushRange || xRange; // default to x range if no brush range available
+
+      const hasRange = activeRange &&
+        activeRange.length === 2 &&
+        !isNaN(activeRange[0]) &&
+        !isNaN(activeRange[1]);
+
+      if (!hasRange) return; // quit early if we don't have a valid range
+
+      // calculate current brush extents using x scale
+      let extents = activeRange.map(x.invert);
+
+      // if rounding fn supplied, then snap to rounded extents
+      // and move brush rect to reflect rounded range bounds if it was set by user interaction
+      if (round) {
+        extents = extents.map(round);
+        activeRange = extents.map(x);
+
+        if (
+          d3.event.sourceEvent &&
+          d3.event.sourceEvent.type === 'mousemove'
+        ) {
+          d3.select(this).call(brush.move, activeRange);
+        }
+      }
+
+      // move brush handles to start and end of range
+      g.selectAll('.brush-handle')
+        .style('display', null)
+        .attr('transform', (d, i) => `translate(${activeRange[i]}, 0)`);
+
+      // resize sliding window to reflect updated range
+      g.select(`#clip-${id} rect`)
+        .attr('x', activeRange[0])
+        .attr('width', activeRange[1] - activeRange[0]);
+
+      // filter the active dimension to the range extents
+      dimension.filterRange(extents);
+
+      // re-render the other charts accordingly
+      renderAll();
     });
-    brush.on("brush.chart", function() {
-      if (brush.empty()) {
-        var svg = d3.select(this.parentNode.parentNode.parentNode);
-        svg.select(".title a").style("display", "none");
-        svg.select("#clip-" + id + " rect").attr("x", null).attr("width", "100%");
-        dimension.filterAll();
+
+    brush.on('end.chart', function () {
+      // reset corresponding filter if the brush selection was cleared
+      // (e.g. user "clicked off" the active range)
+      if (!d3.brushSelection(this)) {
+        reset(id);
       }
     });
-    chart.margin = function(_) {
+
+    chart.margin = function (_) {
       if (!arguments.length) return margin;
       margin = _;
       return chart;
     };
-    chart.x = function(_) {
+
+    chart.x = function (_) {
       if (!arguments.length) return x;
       x = _;
       axis.scale(x);
-      brush.x(x);
+      //axis.attr("transform", "rotate(-20)" );
       return chart;
     };
-    chart.y = function(_) {
+
+    chart.y = function (_) {
       if (!arguments.length) return y;
       y = _;
       return chart;
     };
-    chart.dimension = function(_) {
+
+    chart.dimension = function (_) {
       if (!arguments.length) return dimension;
       dimension = _;
       return chart;
     };
-    chart.filter = function(_) {
-      if (_) {
-        brush.extent(_);
-        dimension.filterRange(_);
-      } else {
-        brush.clear();
-        dimension.filterAll();
-      }
-      brushDirty = true;
+
+    chart.filter = _ => {
+      if (!_) dimension.filterAll();
+      brushDirty = _;
       return chart;
     };
-    chart.group = function(_) {
+
+    chart.group = function (_) {
       if (!arguments.length) return group;
       group = _;
       return chart;
     };
-    chart.round = function(_) {
+
+    chart.round = function (_) {
       if (!arguments.length) return round;
       round = _;
       return chart;
     };
 
-    brush.on = function() {
-    var value = chart.on.apply(chart, arguments);
-    return value === chart ? brush : value;
-  };
+    chart.gBrush = () => gBrush;
 
-    return brush;
-};
+    return chart;
+  }
+});
