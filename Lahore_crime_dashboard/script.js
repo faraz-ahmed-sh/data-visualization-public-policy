@@ -1,8 +1,8 @@
 
 
-var margin = 50;
-var width = 720;
-var height = 450;
+var margin =  {top: 20, right: 20, bottom: 30, left: 80};
+var width = 720 - margin.left - margin.right;
+var height = 450 - margin.top - margin.bottom;
 
 //load the data
 var parseDate = d3.timeParse("%Y-%m-%d");
@@ -44,7 +44,7 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
 
 
 	dataset = data;
-	console.log(dataset)
+	//console.log(dataset)
 	//makeBarChart(dataset);
 	//console.log(dataset["hour"]);
 
@@ -72,8 +72,46 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
 	var hourGroup = hourDim.group();
 	var all = ndx.groupAll();
 
-	//console.log(dataset.map(function (d) { return d["Month"]; }))
-	//Make charts on which cross filter will be applied
+	//make a horizontal bar chart to show the count of Neighborhood
+	var neighborhoodCrimeCount = d3.nest()
+  	.key(function(d) { return d["Neighborhood"]; })
+  	.rollup(function(v) { return v.length; })
+  	.entries(dataset);
+  	console.log(neighborhoodCrimeCount)
+
+  	var svg = d3.select("#hBarChart")
+		.append('svg') 
+		.attr('width', width + margin.right + margin.left)
+		.attr('height', height + margin.top + margin.bottom);
+
+  	var xScale = d3.scaleLinear().range([0, width]);
+	var yScale = d3.scaleBand().range([height, 0]);
+
+	var g = svg.append("g")
+			.attr("transform", "translate(" + margin.left*1.5 + "," + margin.top + ")");
+
+		xScale.domain([0, d3.max(neighborhoodCrimeCount, function(d) { return d.value; })]);
+	    yScale.domain(neighborhoodCrimeCount.map(function(d) { return d.key; })).padding(0.1);
+
+	    g.append("g")
+	        .attr("class", "x axis")
+	       	.attr("transform", "translate(0," + height + ")")
+	      	.call(d3.axisBottom(xScale).ticks(7));
+
+	    g.append("g")
+	        .attr("class", "y axis")
+	        .call(d3.axisLeft(yScale));
+
+	    g.selectAll(".bar")
+	        .data(neighborhoodCrimeCount)
+	      .enter().append("rect")
+	        .attr("class", "bar")
+	        .attr("x", 0)
+	        .attr("height", yScale.bandwidth())
+	        .attr("y", function(d) { return yScale(d.key); })
+	        .attr("width", function(d) { return xScale(d.value); })
+
+  	//Make charts on which cross filter will be applied
 	var charts = [
 	
     barChart()
@@ -83,7 +121,7 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
         .domain(dataset.map(function (d) { return d["Crime Type"]; }))
         .rangeRound([10, 10 * 120]))
       	.margin({top: 10, right: 13, bottom: 30, left: 10 })
-      	.filter(["narcotics"]),
+      	.filter(["robbery"]),
 
       barChart()
         .dimension(date)
@@ -148,7 +186,7 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
   function crimeList(div) {
     var crimeByDate = nestByDate.entries(date.top(40));
 
-    console.log(crimeByDate)
+    //console.log(crimeByDate)
    
     div.each(function() {
       var date = d3.select(this).selectAll(".date")
@@ -200,7 +238,8 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
     let x;
     let y = d3.scaleLinear().range([200, 0]);
     const id = barChart.id++;
-    const axis = d3.axisBottom();
+    const xaxis = d3.axisBottom();
+    const yaxis = d3.axisLeft();
     const brush = d3.brushX();
     let brushDirty;
     let dimension;
@@ -214,8 +253,9 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
       const height = y.range()[0];
 
       brush.extent([[0, 0], [width, height]]);
-
+      //set y domain to be the topmost value of a particular dataset
       y.domain([0, group.top(1)[0].value]);
+      //console.log(y.domain([0, group.top(1)[0].value]))
 
       div.each(function () {
         const div = d3.select(this);
@@ -251,9 +291,9 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
             .attr('clip-path', `url(#clip-${id})`);
 
           g.append('g')
-            .attr('class', 'axis')
+            .attr('class', 'xaxis')
             .attr('transform', `translate(0,${height})`)
-            .call(axis)
+            .call(xaxis)
             .selectAll("text")
             	//.attr("dx", "15")
             //.attr("dy", "-.5em")
@@ -387,7 +427,7 @@ d3.json("Data/lahore_crime_14.json", function(error, data) {
     chart.x = function (_) {
       if (!arguments.length) return x;
       x = _;
-      axis.scale(x);
+      xaxis.scale(x);
       //axis.attr("transform", "rotate(-20)" );
       return chart;
     };
