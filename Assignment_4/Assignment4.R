@@ -133,7 +133,7 @@ ggplot(by_wday_crime_count, aes(x = hour, y = Month, fill = freq)) +
 crime_type_list <- list(desc_crimetype$`Crime Type`)
 
 new <- new %>% mutate(Crime_type_category = ifelse(`Crime Type` %in% crime_type_list, "", NA))
-
+new
 #create a tibble with crime types and their crime categories
 crime_categories <- 
   tribble(
@@ -196,6 +196,7 @@ crime_categories <-
 new_merge <- left_join(new, crime_categories, by = c("Crime Type" = "Crime Type"))
 
 by_crime_cat_crime_count <- new_merge %>% group_by(Crime_Category, `Crime Type`) %>% summarise(freq = n())
+#by_crime_cat_crime_count
 
 ggplot(by_crime_cat_crime_count, aes(area = freq, fill = Crime_Category, label = `Crime Type`, subgroup = Crime_Category)) + 
   geom_treemap() + 
@@ -279,3 +280,37 @@ ggplot(data = count_all_crime_types, aes(x=`Crime Type`, y=freq_z, label=freq_z)
        fill="Number of \nCrime Incidences") +
   coord_flip() + theme_fancy 
 
+
+# Graph 8: Choropleth of Chicago Police Beats showing complaints against police in 2016
+
+## read the shapefile with ReadOGR:
+
+chicago_beat_map <- readOGR(dsn="ChicagoPoliceBeats", layer="ChicagoPoliceBeats")
+
+chicago_beat.points <- fortify(chicago_beat_map, region="beat_num")
+
+# read in the dataset on complaints against police officers (by beats) obtained from Invisible Institute website: https://github.com/invinst/chicago-police-data
+chicago_police_complaints <- read.csv("complaints.csv")
+
+# filter only the data for year 2016
+chicago_police_complaints$Year <- format(as.Date(chicago_police_complaints$incident_datetime),"%Y")
+chicago_police_complaints_2016 <- chicago_police_complaints %>% filter(Year == "2016")
+
+# use string pads to ensure consistency in "beat" codes in both shape files and complaints dataset
+
+chicago_police_complaints_2016$beat <- str_pad(chicago_police_complaints_2016$beat, 4, side="left", pad = 0)
+
+# perform descriptive statistics by beat
+
+count_complaints_per_beat <- chicago_police_complaints_2016 %>% group_by(beat) %>% summarise(freq = n())
+
+# Combine the dataset on complaints against police (by beats) with the beats points
+chicago_beat_2016 <- left_join(chicago_beat.points, count_complaints_per_beat, by = c("id" = "beat"))
+
+ggplot(data=chicago_beat_2016, aes(long, lat, group = group, fill = freq)) +
+  geom_polygon() +
+  geom_path(color="#E5E4D4") +
+  coord_equal(1.2) +
+  theme_map + 
+  scale_fill_distiller(name = "No. of complaints \nagainst police officers", palette = "Spectral", limits = c(0, 30), breaks=seq(0,30,by=10)) + 
+  labs(title = "Complaints against police highest in Chicago's South Side", subtitle="South Side and Far Southest Side generated highest number of complaints \nagainst police offciers in 2016.", caption = "Source: Invisible Institute and City of Chicago")

@@ -1,0 +1,405 @@
+
+---
+title: "Static Data Visualization - Final Portolio"
+output:
+  html_document: default
+  fig_width: 10 
+  fig_height: 10
+---
+
+```{r setup, include=FALSE}
+require("knitr")
+opts_knit$set(root.dir = "/Users/faraaz/Desktop/MSCAPP (Quarter 4)/Data Viz for Public Policy/data-viz-for-public-policy-fall-2017/static_viz_final/Assignment_4/Data/")
+```
+
+![title](Holden-Caulfield.jpg)
+
+## Visualizing the Crime Rate of Lahore of the year 2014
+
+##### December 11th, 2017
+#
+#
+I have attempted to produce graphs and narratives to accompany them to understand the crime rate of Lahore better. My data on crime incidences comes from the Punjab Police Department of Pakistan, and my timeframe of analysis is the year of 2014 for the city of Lahore. 
+
+#### Background
+Lahore saw an increase in the number of crime incidences in 2016 by [34% over the prior year](https://tribune.com.pk/story/1279895/crime-rises-34-last-year-lahore/). The most significant crime type is the street crime that involves cases of murder, burglary, theft, robbery and motorcycle snatching. Lahore is an important city, economically and politically, and the rising crime rate leads to questions on how can law-enforcement agencies control the situation. Before we can get to the answer to that, it is vital to analyze different aspects of crime rate of Lahore such as where do most crimes occur, what type of crimes are higher in frequency, during what time periods do most crimes occur etc. The graphs attempt to shed light on these aspects.
+
+
+```{r loading data, echo = FALSE, message=FALSE, warning=FALSE}
+library("dplyr")
+library("readr")
+library("ggplot2")
+library("lubridate")
+library("knitr")
+library("xtable")
+library("ggthemes")
+library("tidyverse")
+library("stringr")
+library("treemapify")
+library("rgdal")
+library("mapproj")
+library("scales")
+library("gpclib")
+library("sp")
+library("rgeos")
+library("rgdal")
+library("maptools")
+library("ggthemes")
+
+# create a common color scheme for ordinal and continuous values
+ordinalColorScale_color = scale_color_brewer(palette = "Dark2")
+ordinalColorScale_fill = scale_fill_brewer(palette = "Dark2")
+
+# continuous color scheme inspired by Urban Institute's DataViz Guide: http://urbaninstitute.github.io/graphics-styleguide/
+continuousColorScale <- function(upperLimit)
+  {
+  colorCont = scale_fill_gradient(low="#f8d5d4", high="#E82D17", limits=c(0, upperLimit))
+  return(colorCont)
+  }
+
+# I have made three themes: a fancy theme (with panel background color), a simple theme (without a panel background color) and a theme that is suitable for the map
+# Title, subtitle font and some margins inspired by Sunlight Foundation's DataViz Guide: https://github.com/amycesal/dataviz-style-guide/blob/master/Sunlight-StyleGuide-DataViz.pdf
+theme_fancy <- theme(plot.title = element_text(family="Palatino", face="bold", size=18, hjust=0, margin = margin(0, 22, 0, 0)),
+                       plot.subtitle=element_text(size=13, family="Georgia", hjust=0, face="italic", color="#8E8883", margin = margin(10, 22, 22, 0)),
+                       axis.title = element_text(family = "Franklin Gothic Book",size=12, color="#000000", margin = margin(22, 0, 22, 0)),
+                       axis.text=element_text(size=10),
+                       plot.caption=element_text(family = "Georgia", hjust = 0, size=9, face="italic", color="black"),
+                       panel.grid.major.x = element_blank(),
+                       panel.grid.minor.x = element_blank(),
+                       panel.grid.major.y = element_line( size=.3, color="white" ),
+                       panel.grid.minor.y = element_blank(),
+                       plot.background = element_rect(fill = '#fce39e'),
+                       panel.background = element_rect(fill = '#fce39e'),
+                       legend.title = element_text(colour="black", size=10, face="bold"),
+                       legend.background = element_rect(fill="#fce39e")
+                     )
+
+
+theme_simple <- theme(plot.title = element_text(family="Palatino", face="bold", size=18, hjust=0, margin = margin(0, 22, 0, 0)),
+                       plot.subtitle=element_text(size=13, family="Georgia", hjust=0, face="italic", color="#8E8883", margin = margin(10, 22, 22, 0)),
+                       axis.title = element_text(family = "Franklin Gothic Book",size=12, color="#000000", margin = margin(22, 0, 22, 0)),
+                       axis.text=element_text(size=10),
+                       plot.caption=element_text(family = "Georgia", hjust = 0, size=9, face="italic", color="black")
+                       )
+
+theme_map <- theme(axis.ticks = element_blank(),
+                   axis.text.x = element_blank(),
+                   axis.text.y = element_blank(),
+                   axis.title.x=element_blank(),
+                   axis.title.y=element_blank(),
+                   panel.background = element_blank(),
+                   panel.border = element_blank(), 
+                   plot.title = element_text(family="Palatino", face="bold", size=18, hjust=0, margin = margin(0, 22, 0, 0)), 
+                   plot.subtitle=element_text(size=13, family="Georgia", hjust=0, face="italic", color="#8E8883", margin = margin(10, 22, 22, 0)), 
+                   plot.caption=element_text(family = "Georgia", hjust = 0, size=9, face="italic", color="black")
+)
+
+# read the data
+
+FIR_crime_data <- read_csv("Full_FIR_Details_2008to2015.csv")
+FIR_crime_data$`Crime Type` <- ifelse(FIR_crime_data$`Crime Type` == "bulgery", "burglary", FIR_crime_data$`Crime Type`)
+
+# rename a variable name to its English equivalent
+colnames(FIR_crime_data)[1] <- "Neighborhood"
+
+# filter the data for only 2014
+FIR_crime_data$year <- substring(FIR_crime_data$Date,7,10)
+crimeLahore <- FIR_crime_data %>% filter(year=="14") 
+```
+
+
+```{r graph1, echo = FALSE, fig.width=9, fig.height=7}
+
+############---------EIGHT GRAPHS----------###########
+
+
+#Graph 1: Bar Chart - plot the number of crime incidences by neighborhoods
+
+by_neighborhood <- group_by(crimeLahore, Neighborhood, `Crime Type`)
+summ_crimes_by_neighborhood_and_type <- summarise(by_neighborhood, freq = n())
+
+ggplot(data=summ_crimes_by_neighborhood_and_type, aes(x = Neighborhood, y= freq)) + 
+  geom_bar(stat="identity", width=0.7, fill="tomato2") +
+  theme(aspect.ratio = .6) +
+  scale_y_continuous(breaks = (seq(0, 15000, by = 2500))) +
+  labs(title = "South of Lahore is the most dangerous part of the city", x = "Neighborhood", y = "Number of Crime Incidences", subtitle="Highest number of crime occurrences took place in the Southeast part of Lahore in 2014.", caption = "Source: Punjab Police Department") +
+  scale_x_discrete(limits=c("Iqbal Town", "Nishtar Town", "Ravi Town", "Shalamar Town", "Cantonment", "Wagha Town", "Aziz Bhatti Town", "Data Gunj Baksh", "Samanabad Town", "Gulberg Town")) + 
+  theme_fancy + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+Most crime activities tend to generate from Iqbal Town, Nishtar Town, and Wagha Town. These three areas together contribute more than 50 percent of the total crime rate of Lahore. Iqbal Town and Nishtar Town are located in the southeastern and southern parts of Lahore, respectively, and are home to a number of commercial, residential and educational activities, including the oldest open university of Pakistan, Allama Iqbal Open University. 
+
+The population density per square kilometer area and a relatively higher level of income of the families who live in these areas make Iqbal Town and Nishtar Town the most dangerous towns of Lahore.
+
+
+```{r graph2, echo = FALSE, fig.width=15, fig.height=13}
+
+# Graph 2: Point Chart - plot the number of crime incidences by neighborhoods and crime type
+
+# first find out the top 15 crime types that occur most frequently
+by_crime_type <- group_by(crimeLahore, `Crime Type`) %>% summarise(freq = n())
+desc_crimetype <- arrange(by_crime_type, desc(freq))[1:15, ]
+
+# remove "misc" and "other crimes" as they create noise in the data
+crime_type_final <- filter(crimeLahore, `Crime Type` %in% desc_crimetype$`Crime Type` & (`Crime Type` != "othercrimes") & (`Crime Type` != "miscellaneous"))
+final_by_neighborhood <- group_by(crime_type_final, Neighborhood, `Crime Type`) %>%  summarise(freq = n())
+
+ggplot(data=final_by_neighborhood, aes(x = Neighborhood, y = `Crime Type`, size=freq, color=freq)) + 
+  geom_point() +
+  labs(title = "Incidences of robbery and motorcycle theft occur frequently in Lahore", x = "Neighborhood", y = "Type of crime", subtitle="Number of crime incidences of various crime types in \ndifferent neighborhoods in 2014.", caption = "Source: Punjab Police Department") +
+  guides(color=guide_legend(title="Number of \nCrime Incidences"), size=guide_legend(title="Number of \nCrime Incidences")) +
+  scale_color_gradient(low="#f8d5d4", high="#E82D17", limits=c(0, 1000)) +
+  scale_size_continuous(limits=c(0, 1000), breaks=seq(0,1000, by=250)) +
+  theme_simple + 
+  theme(aspect.ratio = 1.0) + 
+  theme(panel.background = element_rect(fill = '#fce39e')) +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+These three towns also report highest number of cases for motorcycle theft and robbery -- two main types of crime activities recorded in Lahore. In 2016, the number of vehicle theft increased so much that the Punjab Police had to establish checkpoints to ensure that the engine number of cars matched the record provided by the authorities. Robbery also tends to be higher in Gulberg and Samanabad Town ??? both of which are highly residential areas.
+
+Cases of narcotics, besides originating from the three high crime-prone areas, also come from Data Gunj Baksh Town. This Town is home to Data Darbar, the largest sufi shrine in South Asia and the most sacred place in Lahore. However, sufis and malangs from different income backgrounds frequent this place and consume charas/hashish (narcotics) often.
+
+```{r graph3, echo = FALSE, fig.width=10, fig.height=8}
+crimeLahore$Date <- dmy(crimeLahore$Date)
+crimeLahore$Month <- month(crimeLahore$Date, label = TRUE)
+crimeLahore$week_day <- wday(crimeLahore$Date, label = TRUE)
+
+# Fix the time to hours (round off to the nearest hour)
+crimeLahore$hour <- hour(crimeLahore$Time)
+
+# summarise the count of crimes according to week day and time
+by_wday_crime_count <- crimeLahore %>% group_by(Month, hour) %>% summarise(freq = n())
+k <- "00"
+by_wday_crime_count$hour <- paste(by_wday_crime_count$hour, k, sep =":")
+
+ggplot(by_wday_crime_count, aes(x = hour, y = Month, fill = freq)) + 
+  geom_tile() +
+  scale_x_discrete(limits = c("0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00")) +
+  continuousColorScale(600) +
+  labs(title = "Crime incidences occur the most between noon and midnight", x = "Hour of the day", y = "Month", subtitle="Crime rate does not have a seasonal pattern, \nbut most incidences take place later in the day", caption = "Source: Punjab Police Department") +
+  theme_simple +
+  theme(axis.text.x=element_text(size=7)) +
+  guides(color=guide_legend(title="Number of \nCrime Incidences")) +
+  theme(aspect.ratio = 0.7)
+  theme(panel.border = element_rect(linetype = "blank"))
+
+```
+
+Moreover, for an urban city like Lahore, it is a bit surprising to find out that that fewer incidences of crime take place after midnight and before noon. The city is a happening place at night because of its reputation for good food, but it does get its share of quiet time after midnight. However, most instances of crime seem to take place right during the midday and through the rest of the day until midnight.
+
+The rate of crime also appears to behave consistently across all the months of 2014. There really is no break for the perpetrators in the colder months! 
+
+```{r graph4, echo = FALSE, fig.width=10, fig.height=8}
+# Graph 4: Treemap
+  #First let's codify the type of crime into a proper category as defined in: https://punjabpolice.gov.pk/crimestatistics
+  
+crime_type_list <- list(desc_crimetype$`Crime Type`)
+  
+crimeLahore <- crimeLahore %>% mutate(Crime_type_category = ifelse(`Crime Type` %in% crime_type_list, "", NA))
+  
+  #create a tibble with crime types and their crime categories
+  crime_categories <- 
+    tribble(
+      ~`Crime Type`, ~Crime_Category,
+      "miscellaneous", "Miscellaneous",
+      "othercrimes", "Other Crimes",
+      "motorcycletheft", "Crimes Against Property",
+      "robbery", "Crimes Against Property",
+      "armsordinanceact", "Other Crimes",
+      "narcotics", "Other Crimes",
+      "burglary", "Crimes Against Property",
+      "antinorcoticsact", "Other Crimes",
+      "beggingact", "Crimes Against Person",
+      "chequedishonour", "Crimes Against Person",
+      "overspeeding", "Other Crimes",
+      "cartheft", "Crimes Against Property",
+      "gambling", "Crimes Against Person",
+      "pricecontrol", "Other Crimes",
+      "othervehicletheft", "Crimes Against Property",
+      "attemptedmurder", "Crimes Against Person",
+      "dengueact", "Other Crimes",
+      "kiteflyingact","Other Crimes",
+      "kidnapping", "Crimes Against Person", 
+      "loudspeakeract", "Other Crimes",
+      "telephoneact", "Other Crimes",
+      "hurtpersonalfeud", "Crimes Against Person",
+      "attackongovtservant", "Crimes Against Person",
+      "localgovernment", "Other Crimes",
+      "outragingthemodestyofwomen", "Crimes Against Person",
+      "electricityact", "Crimes Against Property",
+      "murder", "Crimes Against Person",
+      "ppc", "Other Crimes",
+      "motorcyclesnatching", "Crimes Against Property",
+      "onewheeling", "Other Crimes",
+      "fatalaccident", "Other Crimes",
+      "kidnappingminors", "Crimes Against Person",
+      "rape", "Crimes Against Person",
+      "tresspassing", "Other Crimes",
+      "illegalextortion", "Other Crimes",
+      "nonfatalaccident", "Other Crimes",
+      "blindmurder", "Crimes Against Person", 
+      "gangrape", "Crimes Against Person",
+      "policeencounter", "Other Crimes",           
+      "hubsebeja", "Other Crimes",
+      "dacoity", "Crimes Against Property",             
+      "copyrightact", "Other Crimes",
+      "antiterrorism", "Other Crimes", 
+      "policeorder", "Other Crimes",
+      "illegalgascylinder", "Other Crimes",      
+      "carsnatching", "Crimes Against Property",
+      "dacoitywithmurder", "Crimes Against Property",      
+      "secratarianism", "Other Crimes",
+      "othervehiclesnatching", "Crimes Against Property",     
+      "kidnapforransom", "Crimes Against Person",
+      "bordercrossing", "Other Crimes", 
+      "cigretteact", "Other Crimes"
+    )
+  
+  # left join on both tables
+  crimeLahore_merge <- left_join(crimeLahore, crime_categories, by = c("Crime Type" = "Crime Type"))
+  
+  by_crime_cat_crime_count <- crimeLahore_merge %>% group_by(Crime_Category, `Crime Type`) %>% summarise(freq = n())
+  
+  ggplot(by_crime_cat_crime_count, aes(area = freq, fill = Crime_Category, label = `Crime Type`, subgroup = Crime_Category)) + 
+    geom_treemap() + 
+    geom_treemap_text(colour = "white", place = "centre", grow = TRUE) + 
+    ordinalColorScale_fill + 
+    labs(title = "Crimes committed against property exceed the crimes committed against person", subtitle="''Other Crimes'' which includes narcotics and overspeeding, was the major category of crimes committed in 2014.", caption = "Source: Punjab Police Department", fill = "Crime Category") +
+    theme(aspect.ratio = 0.7) + theme_simple
+```
+
+"Other Crimes" that include people/groups caught under arms ordinance act, and crimes of overspeeding, narcotics and price control tend to be the most prominent crime category in 2014. This is followed by Crimes Against Property, Miscellaneous and Crimes Against Person.
+
+The Police Department can learn a lot of pattern and behavior of crime types if they explore "Other Crimes" and "Miscellaneous" categories.
+
+```{r graph5, echo = FALSE, fig.width=8, fig.height=7}
+# Graph 5: Line Chart - how have different crime categories crime count changed over time?
+
+by_month_crime_type_cat <- group_by(crimeLahore_merge, Crime_Category, Month)  %>% summarise(freq = n())
+
+ggplot(by_month_crime_type_cat, aes(Month, freq, group = Crime_Category, color = Crime_Category)) + 
+  geom_line(size = 1) + geom_point(size = 2) +
+  ordinalColorScale_color +
+  labs(title="Crimes against person decrease throughout the year", 
+       subtitle="Miscellaneous Crimes and Other Crimes follow the same pattern, \nespecially in the second half of 2014.", 
+       caption="Source: Punjab Police Department", 
+       y="Number of Crime Incidences",
+       colour = "Crime Category") +
+    theme(aspect.ratio = 1.0) +
+    theme_fancy
+```
+
+Categories of "Other Crimes" and "Miscellaneous" seem to be correlated with each other, especially in the second half of the year. This means that crime prevention can be made more strategic, that is, the strategy used to prevent "Other Crimes" can be used to prevent crimes that take place in the category of "Miscellaneous".
+
+Crimes Against Person seem to have reduced in the second half of 2014, which was a period of stability and economic growth in the country.
+
+```{r graph6, echo = FALSE, fig.width=12, fig.height=10}
+# Graph 6: Time-series calendar heatmap
+# on data from 2010 to 2014
+
+# first let's use lubridate library to extract datetime values
+crimeLahore_all_data <- FIR_crime_data %>% filter(year %in% c("10", "11", "12", "13", "14"))
+crimeLahore_all_data$Date <- dmy(crimeLahore_all_data$Date)
+crimeLahore_all_data$Month <- month(crimeLahore_all_data$Date, label = TRUE)
+crimeLahore_all_data$day <- day(crimeLahore_all_data$Date)
+crimeLahore_all_data$monthweek <- ceiling(crimeLahore_all_data$day/ 7)
+crimeLahore_all_data$year <- year(crimeLahore_all_data$Date)
+crimeLahore_all_data$week_day <- wday(crimeLahore_all_data$Date, label = TRUE)
+crimeLahore_all_data
+
+# groupby on year, month, monthweek and weekday
+crimeLahore_all_data_crime_count <- crimeLahore_all_data %>% group_by(year, Month, monthweek, week_day) %>% dplyr::summarise(freq_ = n())
+
+ggplot(crimeLahore_all_data_crime_count, aes(x=monthweek, y=week_day, fill = freq_)) + 
+  geom_tile(colour = "white") + 
+  facet_grid(year ~ Month) + 
+  continuousColorScale(300) +
+  labs(x="Week of Month",
+       y="Day of the Week",
+       title = "Crime rate of Lahore has increased by 600 times since 2010", 
+       subtitle="Urbanization, migration and presence of militant groups have significantly contributed \nto the spike in the crime rate of Lahore.",
+       caption = "Source: Punjab Police Department",
+       fill="Number of \nCrime Incidences") +
+  theme_simple +
+  theme(aspect.ratio = 1.4)
+```
+
+The number of crime incidences that occur each year has increased by over 600 times from 2010 to 2014. This result is owing to a number of economic and social factors such as urbanisation, migration, and growth of militant/extremist groups. This result is also possible because of lack of data collection in the earlier years of this decade.
+
+```{r graph7, echo = FALSE, fig.width=10, fig.height=8}
+# Graph 7: Diverging bars - are different types of crime above or below the average crime rate?
+
+#Find total number of crimes for the year 2014, calculate its mean and standardize
+count_all_crime_types <- crimeLahore %>% group_by(`Crime Type`) %>% dplyr::summarise(freq_ = n()) 
+count_all_crime_types$freq_z <- round((count_all_crime_types$freq_ - mean(count_all_crime_types$freq_))/sd(count_all_crime_types$freq_), 2)
+
+#Show crime types for only top 25 crime types with high frequency of crime events
+count_all_crime_types <- arrange(count_all_crime_types, desc(freq_))[1:25, ]
+
+#calculate whether a crime type is above/below the average standardized crime rate and order it
+count_all_crime_types$crime_type_status <- ifelse(count_all_crime_types$freq_z < 0, "below", "above")  # above / below avg flag
+count_all_crime_types <- count_all_crime_types[order(count_all_crime_types$freq_z), ] 
+count_all_crime_types$`Crime Type` <- factor(count_all_crime_types$`Crime Type`, levels = count_all_crime_types$`Crime Type`)
+
+ggplot(data = count_all_crime_types, aes(x=`Crime Type`, y=freq_z, label=freq_z)) + 
+  geom_bar(stat='identity', aes(fill=crime_type_status), width=.5)  +
+  scale_fill_manual(name="Total Number of \nCrime Incidences", 
+                    labels = c("Above Average", "Below Average"), 
+                    values = c("above"="#00ba38", "below"="#f8766d")) + 
+  labs(x="Crime Type",
+       y="Deviation from zero",
+       title = "Only 25% of different crime types contribute the most to the total crime incidences",
+       subtitle="Most crime types below the average number of crime incidences have the same frequency where as \ncrime types above average have a large difference in crime frequency between each other.",
+       caption = "Source: Punjab Police Department",
+       fill="Number of \nCrime Incidences") +
+  coord_flip() + theme_fancy 
+```
+
+This chart shows the crime types that occurred most frequently or least frequently depending on how far they were from the "average" crime rate in 2014. The average crime rate in 2014 was just above 1,000 crime incidences/crime type. 
+
+The chart further demonstrates that there is a lot of variability in the crime frequency of crime types that are "above average" and very low variable in the crime frequency of crime types that are "below average". This means that by focusing on preventing the crime types that are "above average", law enforcement agencies can drastically bring down the crime rate of Lahore.
+
+```{r map1, echo = FALSE, fig.width=9, fig.height=7}
+# Graph 8: Choropleth of Chicago Police Beats showing complaints against police in 2016
+
+## read the shapefile with ReadOGR:
+
+chicago_beat_map <- readOGR(dsn="ChicagoPoliceBeats", layer="ChicagoPoliceBeats")
+
+chicago_beat.points <- fortify(chicago_beat_map, region="beat_num")
+
+# read in the dataset on complaints against police officers (by beats) obtained from Invisible Institute website: https://github.com/invinst/chicago-police-data
+chicago_police_complaints <- read.csv("complaints.csv")
+
+# filter only the data for year 2016
+chicago_police_complaints$Year <- format(as.Date(chicago_police_complaints$incident_datetime),"%Y")
+chicago_police_complaints_2016 <- chicago_police_complaints %>% filter(Year == "2016")
+
+# use string pads to ensure consistency in "beat" codes in both shape files and complaints dataset
+
+chicago_police_complaints_2016$beat <- str_pad(chicago_police_complaints_2016$beat, 4, side="left", pad = 0)
+
+# perform descriptive statistics by beat
+
+count_complaints_per_beat <- chicago_police_complaints_2016 %>% group_by(beat) %>% summarise(freq = n())
+
+# Combine the dataset on complaints against police (by beats) with the beats points
+chicago_beat_2016 <- left_join(chicago_beat.points, count_complaints_per_beat, by = c("id" = "beat"))
+
+ggplot(data=chicago_beat_2016, aes(long, lat, group = group, fill = freq)) +
+  geom_polygon() +
+  geom_path(color="darkgray") +
+  coord_equal(1.2) +
+  continuousColorScale(30) + 
+  theme_map +
+  labs(title = "Complaints against police highest in Chicago's South Side", 
+       subtitle="South Side and Far Southest Side generated highest number of complaints \nagainst police offciers in 2016.", 
+       caption = "Source: Invisible Institute and City of Chicago",
+       fill = "No. of complaints \nagainst police officers")
+
+```
+
+Highest number of complaints tend to generate against police officers who are in beats in South Side and Far Southeast Side Chicago. The number of complaints against police officers decrease as one travels from the South to the North of Chicago.
+
