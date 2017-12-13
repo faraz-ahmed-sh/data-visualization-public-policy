@@ -9,10 +9,8 @@ output:
 
 ```{r setup, include=FALSE}
 require("knitr")
-opts_knit$set(root.dir = "/Users/faraaz/Desktop/MSCAPP (Quarter 4)/Data Viz for Public Policy/data-viz-for-public-policy-fall-2017/static_viz_final/Assignment_4/Data/")
+opts_knit$set(root.dir = "/Users/faraaz/Desktop/MSCAPP (Quarter 4)/Data Viz for Public Policy/data-viz-for-public-policy-fall-2017/static_viz_final/Data/")
 ```
-
-![title](Holden-Caulfield.jpg)
 
 ## Visualizing the Crime Rate of Lahore of the year 2014
 
@@ -108,7 +106,7 @@ crimeLahore <- FIR_crime_data %>% filter(year=="14")
 ```
 
 
-```{r graph1, echo = FALSE, fig.width=9, fig.height=7}
+```{r graph1, echo = FALSE, fig.width=9, fig.height=7, message=FALSE, warning=FALSE}
 
 ############---------EIGHT GRAPHS----------###########
 
@@ -133,7 +131,7 @@ Most crime activities tend to generate from Iqbal Town, Nishtar Town, and Wagha 
 The population density per square kilometer area and a relatively higher level of income of the families who live in these areas make Iqbal Town and Nishtar Town the most dangerous towns of Lahore.
 
 
-```{r graph2, echo = FALSE, fig.width=15, fig.height=13}
+```{r graph2, echo = FALSE, fig.width=15, fig.height=13, message=FALSE, warning=FALSE}
 
 # Graph 2: Point Chart - plot the number of crime incidences by neighborhoods and crime type
 
@@ -161,7 +159,7 @@ These three towns also report highest number of cases for motorcycle theft and r
 
 Cases of narcotics, besides originating from the three high crime-prone areas, also come from Data Gunj Baksh Town. This Town is home to Data Darbar, the largest sufi shrine in South Asia and the most sacred place in Lahore. However, sufis and malangs from different income backgrounds frequent this place and consume charas/hashish (narcotics) often.
 
-```{r graph3, echo = FALSE, fig.width=10, fig.height=8}
+```{r graph3, echo = FALSE, fig.width=10, fig.height=8, message=FALSE, warning=FALSE}
 crimeLahore$Date <- dmy(crimeLahore$Date)
 crimeLahore$Month <- month(crimeLahore$Date, label = TRUE)
 crimeLahore$week_day <- wday(crimeLahore$Date, label = TRUE)
@@ -191,7 +189,7 @@ Moreover, for an urban city like Lahore, it is a bit surprising to find out that
 
 The rate of crime also appears to behave consistently across all the months of 2014. There really is no break for the perpetrators in the colder months! 
 
-```{r graph4, echo = FALSE, fig.width=10, fig.height=8}
+```{r graph4, echo = FALSE, fig.width=10, fig.height=8, message=FALSE, warning=FALSE}
 # Graph 4: Treemap
   #First let's codify the type of crime into a proper category as defined in: https://punjabpolice.gov.pk/crimestatistics
   
@@ -274,7 +272,7 @@ crimeLahore <- crimeLahore %>% mutate(Crime_type_category = ifelse(`Crime Type` 
 
 The Police Department can learn a lot of pattern and behavior of crime types if they explore "Other Crimes" and "Miscellaneous" categories.
 
-```{r graph5, echo = FALSE, fig.width=8, fig.height=7}
+```{r graph5, echo = FALSE, fig.width=8, fig.height=7, message=FALSE, warning=FALSE}
 # Graph 5: Line Chart - how have different crime categories crime count changed over time?
 
 by_month_crime_type_cat <- group_by(crimeLahore_merge, Crime_Category, Month)  %>% summarise(freq = n())
@@ -295,7 +293,8 @@ Categories of "Other Crimes" and "Miscellaneous" seem to be correlated with each
 
 Crimes Against Person seem to have reduced in the second half of 2014, which was a period of stability and economic growth in the country.
 
-```{r graph6, echo = FALSE, fig.width=12, fig.height=10}
+
+```{r graph6, echo = FALSE, fig.width=12, fig.height=10, message=FALSE, warning=FALSE}
 # Graph 6: Time-series calendar heatmap
 # on data from 2010 to 2014
 
@@ -307,7 +306,6 @@ crimeLahore_all_data$day <- day(crimeLahore_all_data$Date)
 crimeLahore_all_data$monthweek <- ceiling(crimeLahore_all_data$day/ 7)
 crimeLahore_all_data$year <- year(crimeLahore_all_data$Date)
 crimeLahore_all_data$week_day <- wday(crimeLahore_all_data$Date, label = TRUE)
-crimeLahore_all_data
 
 # groupby on year, month, monthweek and weekday
 crimeLahore_all_data_crime_count <- crimeLahore_all_data %>% group_by(year, Month, monthweek, week_day) %>% dplyr::summarise(freq_ = n())
@@ -326,9 +324,10 @@ ggplot(crimeLahore_all_data_crime_count, aes(x=monthweek, y=week_day, fill = fre
   theme(aspect.ratio = 1.4)
 ```
 
+
 The number of crime incidences that occur each year has increased by over 600 times from 2010 to 2014. This result is owing to a number of economic and social factors such as urbanisation, migration, and growth of militant/extremist groups. This result is also possible because of lack of data collection in the earlier years of this decade.
 
-```{r graph7, echo = FALSE, fig.width=10, fig.height=8}
+```{r graph7, echo = FALSE, fig.width=10, fig.height=8, message=FALSE, warning=FALSE}
 # Graph 7: Diverging bars - are different types of crime above or below the average crime rate?
 
 #Find total number of crimes for the year 2014, calculate its mean and standardize
@@ -361,7 +360,7 @@ This chart shows the crime types that occurred most frequently or least frequent
 
 The chart further demonstrates that there is a lot of variability in the crime frequency of crime types that are "above average" and very low variable in the crime frequency of crime types that are "below average". This means that by focusing on preventing the crime types that are "above average", law enforcement agencies can drastically bring down the crime rate of Lahore.
 
-```{r map1, echo = FALSE, fig.width=9, fig.height=7}
+```{r map1, echo = FALSE, fig.width=9, fig.height=7, message=FALSE, warning=FALSE}
 # Graph 8: Choropleth of Chicago Police Beats showing complaints against police in 2016
 
 ## read the shapefile with ReadOGR:
